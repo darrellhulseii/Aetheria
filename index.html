@@ -1,1509 +1,995 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>Dragonflight: Mythic Riders – Aetheria</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;user-select:none;-webkit-user-select:none}
-canvas{display:block;touch-action:none}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drakaria TCG • VICIMVS VINCEMVSQVE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=UnifrakturCook:wght@700&display=swap');
+        body { background: radial-gradient(circle at center, #0a001f 0%, #000000 100%); font-family: 'Cinzel', serif; }
+        .rune { animation: runePulse 4s infinite ease-in-out; }
+        @keyframes runePulse { 0%,100% { text-shadow: 0 0 20px #00ffcc; } 50% { text-shadow: 0 0 60px #ff00ff, 0 0 80px #00ffcc; } }
+        .card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card:hover { transform: scale(1.08) rotate(3deg); box-shadow: 0 0 80px rgba(0, 255, 204, 0.7); }
+        .announcement { animation: announcePop 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; }
+        @keyframes announcePop { 0% { transform: scale(0.6) translateY(30px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+        .hp-bar { height: 14px; background: #111; border-radius: 9999px; overflow: hidden; transition: all 0.4s ease-out; }
+        .damage-flash { animation: damageFlash 400ms ease-out; }
+        @keyframes damageFlash { 0%,100% { filter: brightness(1); } 50% { filter: brightness(3) hue-rotate(340deg); } }
+        .heal-glow { animation: healGlow 600ms ease-out; }
+        @keyframes healGlow { 0%,100% { filter: brightness(1); } 50% { filter: brightness(2.5) hue-rotate(90deg); } }
+        .card-play { animation: cardPlayAnim 500ms ease-out forwards; }
+        @keyframes cardPlayAnim { 0% { transform: scale(1.4) rotate(12deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+        .floating-number { position: absolute; font-weight: 900; pointer-events: none; animation: floatUp 1200ms ease-out forwards; text-shadow: 0 0 15px currentColor; }
+        @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-120px); opacity: 0; } }
+        .shake { animation: shake 400ms ease-in-out; }
+        @keyframes shake { 0%,100% { transform: translateX(0); } 10%,30%,50%,70%,90% { transform: translateX(-4px); } 20%,40%,60%,80% { transform: translateX(4px); } }
+        .log { font-family: monospace; font-size: 0.85rem; }
+    </style>
 </head>
-<body>
-<canvas id="c"></canvas>
+<body class="min-h-screen text-white overflow-x-hidden">
+
+<header class="border-b border-cyan-400/30 bg-black/90 backdrop-blur-lg sticky top-0 z-50">
+    <div class="max-w-screen-2xl mx-auto px-8 py-5 flex items-center justify-between">
+        <div class="flex items-center gap-x-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-cyan-400 rounded-3xl flex items-center justify-center text-4xl rune">🐉</div>
+            <h1 class="text-4xl font-bold tracking-[6px]">DRAKARIA TCG</h1>
+        </div>
+        <div class="flex items-center gap-x-8 text-sm uppercase tracking-widest font-light">
+            <button onclick="navigate(0)" class="hover:text-cyan-400">HOME</button>
+            <button onclick="navigate(1)" class="hover:text-cyan-400">UPLOAD DRAGON</button>
+            <button onclick="navigate(2)" class="hover:text-cyan-400">DECK BUILDER</button>
+            <button onclick="navigate(3)" class="hover:text-cyan-400">BATTLE ARENA</button>
+            <button onclick="showHowToPlay()" class="hover:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-question-circle"></i> HOW TO PLAY</button>
+            <button onclick="showEffectsLegend()" class="hover:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-book"></i> EFFECTS LEGEND</button>
+        </div>
+    </div>
+</header>
+
+<div id="screens">
+
+    <!-- HOME -->
+    <div id="screen-0" class="screen max-w-screen-2xl mx-auto px-8 py-16">
+        <div class="text-center max-w-2xl mx-auto">
+            <div class="mb-12 inline-flex items-center gap-6 bg-black/60 border border-cyan-400/30 rounded-3xl px-10 py-6">
+                <span class="text-7xl">🐉</span>
+                <div class="text-left">
+                    <h2 class="text-6xl font-bold tracking-widest">KEEPER OF THE REALM</h2>
+                    <p class="text-cyan-300 text-2xl">Upload your dragon’s genetics from drakaria.com and battle with its true power.</p>
+                </div>
+            </div>
+            <button onclick="navigate(1)" class="group px-16 py-8 text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-500 to-purple-600 rounded-3xl hover:scale-105 transition-all flex items-center justify-center gap-6 shadow-2xl shadow-cyan-500/50 mx-auto">
+                <i class="fa-solid fa-upload group-active:rotate-12"></i> UPLOAD DRAGON JSON
+            </button>
+            <p class="mt-10 text-gray-400">or</p>
+            <button onclick="loadDemo()" class="mt-4 px-8 py-4 border border-cyan-400 hover:bg-cyan-400/10 rounded-2xl flex items-center gap-3 mx-auto text-cyan-400">
+                <i class="fa-solid fa-dragon"></i> Load Legendary Titan #666 Demo
+            </button>
+        </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div id="screen-1" class="screen hidden max-w-screen-2xl mx-auto px-8 py-12">
+        <div class="max-w-3xl mx-auto">
+            <h2 class="text-5xl font-bold mb-8 flex items-center gap-4"><span class="rune">📜</span> BIND YOUR DRAGON</h2>
+            <div class="bg-black/70 border border-cyan-400/30 rounded-3xl p-8 mb-8">
+                <h3 class="uppercase text-cyan-400 text-sm tracking-widest mb-6">HOW TO GET YOUR DRAGON’S JSON FROM DRAKARIA.COM:</h3>
+                <ol class="space-y-6 text-sm">
+                    <li class="flex gap-4"><span class="font-bold text-cyan-400 w-6">1.</span> Go to <a href="https://drakaria.com" target="_blank" class="underline">drakaria.com</a> → open any hatched dragon’s detail page</li>
+                    <li class="flex gap-4"><span class="font-bold text-cyan-400 w-6">2.</span> Scroll down and click the <span class="font-mono bg-purple-900 px-2 py-0.5 rounded">RAW DATA</span> button</li>
+                    <li class="flex gap-4"><span class="font-bold text-cyan-400 w-6">3.</span> Copy the entire JSON that appears</li>
+                </ol>
+            </div>
+            <div class="border-4 border-dashed border-cyan-400/50 hover:border-cyan-400 rounded-3xl p-16 text-center">
+                <input type="file" id="jsonInput" accept=".json" class="hidden" onchange="handleUpload(event)">
+                <button onclick="document.getElementById('jsonInput').click()" class="px-12 py-6 bg-black border-2 border-cyan-400 rounded-3xl text-2xl hover:bg-cyan-400 hover:text-black font-bold flex items-center gap-4 mx-auto">
+                    <i class="fa-solid fa-upload"></i> SELECT JSON FILE
+                </button>
+                <p class="mt-8 text-xs text-gray-400">or paste full JSON below</p>
+                <textarea id="jsonPasteArea" rows="6" class="w-full mt-3 bg-black border border-purple-400/30 focus:border-cyan-400 p-6 rounded-3xl font-mono text-xs"></textarea>
+                <button onclick="parsePastedJSON()" class="mt-6 px-10 py-4 bg-gradient-to-r from-cyan-400 to-purple-600 text-black font-bold rounded-3xl">PARSE &amp; LOAD DRAGON</button>
+            </div>
+            <div id="uploadStatus" class="mt-8 text-center hidden">
+                <div class="inline-flex items-center gap-3 bg-emerald-900/30 text-emerald-400 px-8 py-4 rounded-3xl">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <span id="statusText" class="font-medium"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DECK BUILDER -->
+    <div id="screen-2" class="screen hidden max-w-screen-2xl mx-auto px-8 py-12">
+        <div class="flex gap-8">
+            <div class="w-80 flex-shrink-0">
+                <h3 class="uppercase text-cyan-300 text-sm tracking-widest mb-3">YOUR DRAGON</h3>
+                <div id="dragonCardDisplay" onclick="showDragonModal()" class="card bg-gradient-to-br from-purple-900/90 to-black border-4 border-cyan-400 rounded-3xl p-6 shadow-2xl cursor-pointer"></div>
+            </div>
+
+            <div class="flex-1">
+                <div class="flex justify-between mb-4">
+                    <h3 class="uppercase text-cyan-300 text-sm tracking-widest">YOUR DECK <span class="text-xs text-gray-400">(exactly 19 trainers)</span></h3>
+                    <div class="flex gap-3">
+                        <button onclick="autoFillDeck()" class="px-4 py-1 bg-cyan-400 text-black text-xs font-bold rounded-2xl">AUTO-FILL 19</button>
+                        <div class="font-mono text-cyan-400" id="selectedCount">0/19</div>
+                    </div>
+                </div>
+                <div id="selectedDeck" class="grid grid-cols-6 gap-3 min-h-[240px] bg-black/40 border border-dashed border-purple-400 rounded-3xl p-4"></div>
+            </div>
+
+            <div class="flex-1">
+                <h3 class="uppercase text-cyan-300 text-sm tracking-widest mb-4">TRAINER LIBRARY (90+ cards • locked to your dragon’s House + Magic Element + Rarity)</h3>
+                <div id="trainerGrid" class="grid grid-cols-6 gap-3 max-h-[580px] overflow-y-auto pr-4"></div>
+            </div>
+        </div>
+
+        <div class="mt-10 flex justify-end gap-4">
+            <button onclick="navigate(1)" class="px-8 py-4 border border-gray-400 rounded-3xl">← CHANGE DRAGON</button>
+            <button onclick="enterBattle()" class="px-12 py-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-black font-bold rounded-3xl text-2xl flex items-center gap-4">
+                ENTER BATTLE ARENA <i class="fa-solid fa-dragon"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- BATTLE ARENA -->
+    <div id="screen-3" class="screen hidden max-w-screen-2xl mx-auto px-8 py-8">
+        <div class="flex justify-between items-start mb-6">
+            <div class="flex-1 flex items-center gap-4">
+                <div id="playerInfo" class="flex items-center gap-3"></div>
+                <div class="text-5xl font-light text-cyan-400">VS</div>
+                <div id="aiInfo" class="flex items-center gap-3"></div>
+            </div>
+            <div class="text-right">
+                <div class="text-xs uppercase tracking-widest mb-1">POINTS</div>
+                <div class="flex gap-8 text-6xl font-bold">
+                    <div id="playerPoints" class="text-cyan-400">0</div>
+                    <div id="aiPoints" class="text-red-400">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8">
+            <div class="bg-black/70 border border-cyan-400/50 rounded-3xl p-8 relative">
+                <div id="playerDragonBattle" class="mb-6"></div>
+                <div id="playerHPContainer" class="relative">
+                    <div class="hp-bar mb-4"><div id="playerHPBar" class="h-full bg-red-500 w-[100%]"></div></div>
+                    <div class="flex justify-between text-xs mb-6"><span>HP</span><span id="playerHPText" class="font-bold"></span></div>
+                </div>
+
+                <div class="flex justify-between text-sm mb-4 items-center">
+                    <div>ENERGY</div>
+                    <div id="playerEnergyText" class="font-mono text-cyan-400 font-bold text-2xl"></div>
+                </div>
+                <div class="hp-bar mb-8"><div id="playerEnergyBar" class="h-full bg-cyan-400"></div></div>
+
+                <div class="mb-6 grid grid-cols-3 gap-4" id="playerActions"></div>
+                <div class="mb-4 text-xs uppercase tracking-widest">YOUR HAND (click any card to play)</div>
+                <div id="trainerHand" class="grid grid-cols-5 gap-3"></div>
+            </div>
+
+            <div class="bg-black/70 border border-red-400/50 rounded-3xl p-8 relative">
+                <div id="aiDragonBattle" class="mb-6"></div>
+                <div id="aiHPContainer" class="relative">
+                    <div class="hp-bar mb-4"><div id="aiHPBar" class="h-full bg-red-500 w-[100%]"></div></div>
+                    <div class="flex justify-between text-xs mb-6"><span>HP</span><span id="aiHPText" class="font-bold"></span></div>
+                </div>
+                <div class="text-right text-sm mb-4">ENERGY</div>
+                <div class="hp-bar mb-8"><div id="aiEnergyBar" class="h-full bg-red-400"></div></div>
+
+                <button onclick="aiTurn()" class="w-full py-4 bg-red-500/80 hover:bg-red-600 text-white rounded-3xl text-sm font-bold">END TURN (AI ACTS)</button>
+            </div>
+        </div>
+
+        <div id="battleLog" class="mt-8 bg-black/60 border border-purple-400/30 rounded-3xl p-6 h-56 overflow-y-auto log text-cyan-200 space-y-2"></div>
+    </div>
+</div>
+
+<!-- ANNOUNCEMENT -->
+<div id="announcement" onclick="if(this.style.display==='flex')this.style.display='none'" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] text-center">
+    <div class="max-w-xl px-12">
+        <div id="announceText" class="text-6xl font-bold mb-8 announcement"></div>
+        <div id="announceSub" class="text-cyan-300 text-2xl"></div>
+    </div>
+</div>
+
+<!-- HOW TO PLAY -->
+<div onclick="if(event.target.id==='howToModal')hideHowToPlay()" id="howToModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000]">
+    <div class="max-w-2xl bg-black border-4 border-cyan-400 rounded-3xl p-8 text-white">
+        <h2 class="text-4xl font-bold mb-6">HOW TO PLAY DRAKARIA TCG</h2>
+        <div class="space-y-6 text-sm">
+            <div><strong>1. Upload Dragon</strong> → Copy raw JSON from drakaria.com</div>
+            <div><strong>2. Deck Builder</strong> → Trainers locked to your House + Magic Element + Rarity</div>
+            <div><strong>3. Battle</strong> → Energy stacks to 6. 1 base attach per turn. CoM once per turn. AI uses its own 19 trainers and damages you every turn.</div>
+        </div>
+        <button onclick="hideHowToPlay()" class="mt-8 px-10 py-4 border border-cyan-400 rounded-3xl">CLOSE GUIDE</button>
+    </div>
+</div>
+
+<!-- EFFECTS LEGEND -->
+<div onclick="if(event.target.id==='legendModal')hideLegend()" id="legendModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000]">
+    <div class="max-w-4xl bg-black border-4 border-cyan-400 rounded-3xl p-8 text-white max-h-[85vh] overflow-auto">
+        <h2 class="text-4xl font-bold mb-8 flex items-center gap-4"><i class="fa-solid fa-book"></i> TRAINER EFFECTS EXPLAINED</h2>
+        <div class="grid grid-cols-2 gap-8 text-sm leading-relaxed">
+            <div><strong class="text-red-400">DAMAGE</strong> — Direct damage to enemy dragon</div>
+            <div><strong class="text-green-400">HEAL</strong> — Restores HP to your dragon</div>
+            <div><strong class="text-orange-400">BOOST</strong> — Adds extra damage this turn</div>
+            <div><strong class="text-cyan-400">ENERGY</strong> — Instantly gains energy</div>
+            <div><strong class="text-purple-400">TRAP</strong> — Immediate counter-damage</div>
+            <div><strong class="text-yellow-400">DISRUPT</strong> — Steals or reduces enemy energy</div>
+            <div><strong class="text-pink-400">LIFESTEAL</strong> — Damage enemy + heal yourself</div>
+            <div><strong class="text-sky-400">REFLECT</strong> — Returns damage to the enemy</div>
+            <div><strong class="text-emerald-400">SHIELD</strong> — Reduces incoming damage next turns</div>
+            <div><strong class="text-amber-400">BURN</strong> — Ongoing damage over turns</div>
+            <div><strong class="text-violet-400">CRIT</strong> — Chance to double next attack damage</div>
+            <div><strong class="text-teal-400">STEAL</strong> — Steal energy from the enemy</div>
+            <div><strong class="text-rose-400">COIL</strong> — Skip turns for massive energy gain</div>
+        </div>
+        <button onclick="hideLegend()" class="mt-8 px-10 py-4 border border-cyan-400 rounded-3xl">CLOSE LEGEND</button>
+    </div>
+</div>
+
+<!-- DRAGON MODAL -->
+<div onclick="if(event.target.id==='dragonModal')hideModal()" id="dragonModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[10000]">
+    <div class="max-w-3xl bg-black border-4 border-cyan-400 rounded-3xl p-8 w-full max-h-[90vh] overflow-auto">
+        <div id="modalContent"></div>
+    </div>
+</div>
+
 <script>
-'use strict';
-// ================================================================
-//  DRAGONFLIGHT: MYTHIC RIDERS – AETHERIA
-//  Single-file HTML5 Canvas Game  |  v2.0 Mobile Enhanced
-//  Virtual Joystick  ·  10 Mythic Cities  ·  Historical Quotes
-// ================================================================
+// ====================== GLOBAL STATE ======================
+let currentDragon = null;
+let selectedTrainers = [];
+let playerEnergy = 0;
+let playerPoints = 0;
+let aiPoints = 0;
+let playerCurrentHP = 0;
+let aiCurrentHP = 0;
+let battleLogEl = null;
+let trainerHand = [];
+let energyAttachedThisTurn = false;
+let comUsedThisTurn = false;
+let aiResurrected = false;
+let aiSelectedTrainers = [];
+let aiHand = [];
+let aiEnergy = 0;
+let aiEnergyAttachedThisTurn = false;
+let currentBossIndex = 0;
 
-const canvas = document.getElementById(‘c’);
-const ctx    = canvas.getContext(‘2d’);
-let W=0,H=0;
-function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
-window.addEventListener(‘resize’,resize); resize();
-
-const S={MENU:‘menu’,SELECT:‘select’,MAP:‘map’,HUB:‘hub’,TRAIN:‘train’,FLIGHT:‘flight’,CODEX:‘codex’};
-let state=S.MENU;
-
-// ── VIRTUAL JOYSTICK ─────────────────────────────────────────
-const JOY={
-active:false, tid:-1,
-bx:0,by:0,          // base center (set on layout)
-cx:0,cy:0,          // current thumb
-dx:0,dy:0,          // normalized -1..1
-radius:62,
-knobR:26,
-visible:false
+// ====================== FULL DEMO #666 ======================
+const demoDragon = {
+  "id": 666,
+  "accId": "491deabe-53e1-4073-87c7-384ec3593645",
+  "accDisplayName": "Jeysuhn",
+  "created": 1756919720,
+  "modified": 1773862910,
+  "assetType": "DRAGON",
+  "assetState": "HATCHED",
+  "charmOfMaking": "0x1ac620957fc1a83733d5c38efd53383271519dc2c4439631205bd6087039ff57",
+  "thumbnail": "",
+  "dragon": {
+    "egg": {
+      "id": 666,
+      "created": 1756919720,
+      "modified": 1756919720,
+      "hatchTime": 1759331281,
+      "hatchState": "HATCHED",
+      "hatchSeason": "WATER",
+      "hatchAge": 1,
+      "hatchEthBlock": 23480792,
+      "hatchBtcBlockPast": 917138,
+      "hatchBtcBlockFuture": 917248,
+      "spawnEthBlock": 23284010,
+      "incubationStartBlock": 23284012,
+      "spawnAge": 1,
+      "spawnSeasonId": 3,
+      "spawnSeason": "WATER",
+      "charmOfMakingArtifacts": {
+        "charmOfMaking": "0x1ac620957fc1a83733d5c38efd53383271519dc2c4439631205bd6087039ff57",
+        "eggId": 666,
+        "transactionHash": "WZAUGfgnptlkLLDl2LUznLkte2jNne7e7QFv9njUHd0=",
+        "blockNumber": 23284010,
+        "blockHash": "MEUCIQDpxThn6ntDRCbqt8AzOlN5Uzfd8MI8AKSSC+rCRamCMQIgYTnH293+bY/Mhd2fiSxEYiFCDc2kcM0+Yde5nIjAXLc="
+      },
+      "house": "FIRE",
+      "magicElement": "WATER",
+      "magicElementRarity": 255,
+      "eggDensity": 375000,
+      "ownerAddr": "",
+      "dragonId": 0,
+      "golden": false,
+      "thumbnail": "https://media.drakaria.com/eggs/egg-fire-water.jpg"
+    },
+    "dragon": {
+      "version": 12,
+      "versionName": "12.0 beta",
+      "id": 666,
+      "charmOfMakingArtifacts": {
+        "charmOfMaking": "0x1ac620957fc1a83733d5c38efd53383271519dc2c4439631205bd6087039ff57",
+        "eggId": 666,
+        "transactionHash": "WZAUGfgnptlkLLDl2LUznLkte2jNne7e7QFv9njUHd0=",
+        "blockNumber": 23284010,
+        "blockHash": "MEUCIQDpxThn6ntDRCbqt8AzOlN5Uzfd8MI8AKSSC+rCRamCMQIgYTnH293+bY/Mhd2fiSxEYiFCDc2kcM0+Yde5nIjAXLc="
+      },
+      "house": "FIRE",
+      "magicElement": "WATER",
+      "spawnSeason": "WATER",
+      "spawnAge": 1,
+      "hatchSeason": "WATER",
+      "hatchAge": 1,
+      "genome": {
+        "armSpikes": { "raw": 6, "interpreted": 4 },
+        "backSpikes": { "raw": 5, "interpreted": 3 },
+        "chestStrength": { "raw": 0, "interpreted": 0 },
+        "headSpikes": { "raw": 3, "interpreted": 2 },
+        "horns": { "raw": 5, "interpreted": 3 },
+        "legSpikes": { "raw": 7, "interpreted": 5 },
+        "legStrength": { "raw": 4, "interpreted": 3 },
+        "magicProficiency": { "raw": 3, "interpreted": 3 },
+        "neckSpikes": { "raw": 1, "interpreted": 1 },
+        "scales": { "raw": 6, "interpreted": 4 },
+        "snout": { "raw": 7, "interpreted": 5 },
+        "tailFin": { "raw": 3, "interpreted": 2 },
+        "tailLength": { "raw": 6, "interpreted": 4 },
+        "tailSpikes": { "raw": 4, "interpreted": 3 },
+        "tailStrength": { "raw": 3, "interpreted": 2 },
+        "wingClaws": { "raw": 6, "interpreted": 4 },
+        "wingSkin": { "raw": 5, "interpreted": 3 },
+        "wingStrength": { "raw": 2, "interpreted": 2 }
+      },
+      "magicInfo": {
+        "stability": 196781,
+        "agility": 1.9056717874185007
+      },
+      "nameInfo": {
+        "shortName": "Оган - Eveth - Ichibi - Вода I",
+        "longName": "Оган - Eveth - Ichibi - Вода I, Primal Dragon of the House FIRE, Spawned in the WATER Season of the 1st Age with WATER magic.",
+        "houseName": { "element": "FIRE" },
+        "magicElementName": { "element": "WATER" }
+      },
+      "thumbnail": "https://media.drakaria.com/dk/000001/WATER/666_thumbnail.png",
+      "sex": "MALE"
+    }
+  }
 };
-function joyLayout(){ JOY.bx=JOY.radius+18; JOY.by=H-JOY.radius-18; JOY.cx=JOY.bx; JOY.cy=JOY.by; }
-window.addEventListener(‘resize’,joyLayout); joyLayout();
 
-// ── INPUT ────────────────────────────────────────────────────
-const keys={};
-const mouse={x:W/2,y:H/2,down:false,dx:0,dy:0,px:0,py:0};
-const clickQ=[];
-const activeTouches={};
-
-// Button touch IDs (so joystick and buttons don’t conflict)
-const btnTouches={boost:-1,breath:-1,up:-1,down:-1};
-
-window.addEventListener(‘keydown’,e=>{
-keys[e.code]=true;
-if([‘Space’,‘ArrowUp’,‘ArrowDown’,‘ArrowLeft’,‘ArrowRight’].includes(e.code))e.preventDefault();
-});
-window.addEventListener(‘keyup’,e=>{ keys[e.code]=false; });
-
-canvas.addEventListener(‘mousedown’,e=>{ mouse.down=true; mouse.px=mouse.x; mouse.py=mouse.y; mouse.x=e.clientX; mouse.y=e.clientY; });
-canvas.addEventListener(‘mouseup’,e=>{
-if(mouse.down&&Math.hypot(e.clientX-mouse.px,e.clientY-mouse.py)<14)clickQ.push({x:e.clientX,y:e.clientY});
-mouse.down=false; mouse.dx=0; mouse.dy=0;
-});
-canvas.addEventListener(‘mousemove’,e=>{ mouse.dx=e.clientX-mouse.x; mouse.dy=e.clientY-mouse.y; mouse.x=e.clientX; mouse.y=e.clientY; });
-
-canvas.addEventListener(‘touchstart’,e=>{
-e.preventDefault();
-for(const t of e.changedTouches){
-activeTouches[t.identifier]={x:t.clientX,y:t.clientY,sx:t.clientX,sy:t.clientY};
-// Assign to joystick if in joystick zone
-if(!JOY.active && Math.hypot(t.clientX-JOY.bx,t.clientY-JOY.by)<JOY.radius*1.8 && state===S.FLIGHT){
-JOY.active=true; JOY.tid=t.identifier;
-JOY.cx=t.clientX; JOY.cy=t.clientY;
-}
-mouse.px=mouse.x; mouse.py=mouse.y; mouse.x=t.clientX; mouse.y=t.clientY; mouse.down=true;
-}
-},{passive:false});
-
-canvas.addEventListener(‘touchmove’,e=>{
-e.preventDefault();
-for(const t of e.changedTouches){
-if(activeTouches[t.identifier]){ activeTouches[t.identifier].x=t.clientX; activeTouches[t.identifier].y=t.clientY; }
-if(t.identifier===JOY.tid){
-const dx=t.clientX-JOY.bx, dy=t.clientY-JOY.by;
-const dist=Math.hypot(dx,dy);
-const clamped=Math.min(dist,JOY.radius);
-const ang=Math.atan2(dy,dx);
-JOY.cx=JOY.bx+Math.cos(ang)*clamped;
-JOY.cy=JOY.by+Math.sin(ang)*clamped;
-JOY.dx=Math.cos(ang)*(clamped/JOY.radius);
-JOY.dy=Math.sin(ang)*(clamped/JOY.radius);
-} else {
-mouse.dx=t.clientX-mouse.x; mouse.dy=t.clientY-mouse.y;
-mouse.x=t.clientX; mouse.y=t.clientY;
-}
-}
-},{passive:false});
-
-canvas.addEventListener(‘touchend’,e=>{
-e.preventDefault();
-for(const t of e.changedTouches){
-const td=activeTouches[t.identifier];
-if(td&&Math.hypot(t.clientX-td.sx,t.clientY-td.sy)<16)clickQ.push({x:t.clientX,y:t.clientY});
-delete activeTouches[t.identifier];
-if(t.identifier===JOY.tid){ JOY.active=false; JOY.tid=-1; JOY.dx=0; JOY.dy=0; JOY.cx=JOY.bx; JOY.cy=JOY.by; }
-}
-mouse.down=Object.keys(activeTouches).length>0;
-if(!mouse.down){mouse.dx=0;mouse.dy=0;}
-},{passive:false});
-
-// Device tilt
-const tilt={b:0,g:0,cal:false,b0:0,g0:0};
-window.addEventListener(‘deviceorientation’,e=>{
-if(!tilt.cal){tilt.b0=e.beta||0;tilt.g0=e.gamma||0;tilt.cal=true;}
-tilt.b=tilt.b*0.78+(((e.beta||0)-tilt.b0))*0.22;
-tilt.g=tilt.g*0.78+(((e.gamma||0)-tilt.g0))*0.22;
-});
-
-function inBox(mx,my,cx,cy,w,h){return mx>=cx-w/2&&mx<=cx+w/2&&my>=cy-h/2&&my<=cy+h/2;}
-function inCirc(mx,my,cx,cy,r){return (mx-cx)**2+(my-cy)**2<r*r;}
-function isHov(cx,cy,w,h){return inBox(mouse.x,mouse.y,cx,cy,w,h);}
-function isHovC(cx,cy,r){return inCirc(mouse.x,mouse.y,cx,cy,r);}
-
-// ── ACTION BUTTONS STATE ─────────────────────────────────────
-const ABTN={boost:false,breath:false,up:false,down:false};
-
-function updateActionButtons(){
-// Reset each frame — set true if any touch is over button
-ABTN.boost=false; ABTN.breath=false; ABTN.up=false; ABTN.down=false;
-if(state!==S.FLIGHT)return;
-const br=BTN_REGIONS();
-for(const tid in activeTouches){
-const t=activeTouches[tid];
-if(parseInt(tid)===JOY.tid)continue;
-if(inCirc(t.x,t.y,br.boost.x,br.boost.y,br.boost.r))ABTN.boost=true;
-if(inCirc(t.x,t.y,br.breath.x,br.breath.y,br.breath.r))ABTN.breath=true;
-if(inCirc(t.x,t.y,br.up.x,br.up.y,br.up.r))ABTN.up=true;
-if(inCirc(t.x,t.y,br.down.x,br.down.y,br.down.r))ABTN.down=true;
-// mouse
-}
-// Also mouse for desktop
-if(mouse.down){
-if(inCirc(mouse.x,mouse.y,br.boost.x,br.boost.y,br.boost.r))ABTN.boost=true;
-if(inCirc(mouse.x,mouse.y,br.breath.x,br.breath.y,br.breath.r))ABTN.breath=true;
-if(inCirc(mouse.x,mouse.y,br.up.x,br.up.y,br.up.r))ABTN.up=true;
-if(inCirc(mouse.x,mouse.y,br.down.x,br.down.y,br.down.r))ABTN.down=true;
-}
-}
-
-function BTN_REGIONS(){
-const br=52;
-return {
-boost: {x:W-br-14,      y:H-br-14,      r:br},
-breath:{x:W-br*2.3-14,  y:H-br-14,      r:br},
-up:    {x:W-br-14,      y:H-br*2.6-14,  r:br*0.78},
-down:  {x:W-br*2.3-14,  y:H-br*2.6-14,  r:br*0.78},
+// ====================== CLASS MAP ======================
+const classMap = {
+    0: { name: "Shadow Native", color: "emerald" },
+    46: { name: "Common Native", color: "amber" },
+    193: { name: "Rare Scout", color: "sky" },
+    242: { name: "Rare Guardian", color: "stone" },
+    252: { name: "Epic Tempest", color: "rose" },
+    255: { name: "Legendary Titan", color: "violet" }
 };
-}
 
-// ── AUDIO ────────────────────────────────────────────────────
-let AC=null;
-function initAudio(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}}
-function tone(f,d,t=‘sine’,v=0.28){
-if(!AC)return;
-try{const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);o.start();o.stop(AC.currentTime+d);}catch(e){}
-}
-function whoosh(){
-if(!AC)return;
-try{const b=AC.createBuffer(1,AC.sampleRate*0.28,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length)*0.55;const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();f.type=‘bandpass’;f.frequency.value=1100;f.Q.value=0.7;s.buffer=b;s.connect(f);f.connect(g);g.connect(AC.destination);g.gain.value=0.13;s.start();}catch(e){}
-}
-function fanfare(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.28,‘triangle’,0.32),i*100));}
-function pClick(){tone(660,0.06,‘square’,0.09);}
-function pSuccess(){tone(880,0.14,‘sine’,0.22);setTimeout(()=>tone(1100,0.18,‘sine’,0.22),110);}
-function pBreath(f){if(!AC)return;tone(f,0.3,‘sawtooth’,0.2);tone(f*1.5,0.3,‘sine’,0.09);}
-
-// ── PARTICLES ────────────────────────────────────────────────
-const P=[];let hue=0;
-function addP(x,y,vx,vy,life,color,size,grav=0){P.push({x,y,vx,vy,life,ml:life,color,size,grav});}
-function boom(x,y,col,n=12,spd=3){for(let i=0;i<n;i++){const a=i/n*Math.PI*2+Math.random()*0.4,s=spd*(0.5+Math.random());addP(x,y,Math.cos(a)*s,Math.sin(a)*s,0.7+Math.random()*0.5,col,3+Math.random()*4);}}
-function trailP(x,y,col,sz=4){addP(x,y,(Math.random()-0.5)*0.5,(Math.random()-0.5)*0.4-0.2,0.38+Math.random()*0.28,col,sz);}
-function rainbowP(x,y){hue=(hue+4)%360;addP(x,y,(Math.random()-0.5)*0.9,-Math.random()*1.1,0.5,`hsl(${hue},100%,65%)`,5+Math.random()*5);}
-function updP(dt){for(let i=P.length-1;i>=0;i–){const p=P[i];p.x+=p.vx;p.y+=p.vy;p.vy+=p.grav;p.life-=dt;if(p.life<=0)P.splice(i,1);}}
-function drawP(){for(const p of P){ctx.save();ctx.globalAlpha=Math.max(0,p.life/p.ml)*0.82;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,Math.max(0.5,p.size*(p.life/p.ml)),0,Math.PI*2);ctx.fill();ctx.restore();}}
-
-// ── DRAW HELPERS ─────────────────────────────────────────────
-function rr(x,y,w,h,r=10){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
-function bar(x,y,w,h,pct,col,bg=’#222’){ctx.fillStyle=bg;rr(x,y,w,h,h/2);ctx.fill();if(pct>0){ctx.fillStyle=col;rr(x,y,Math.max(h,w*Math.min(1,pct)),h,h/2);ctx.fill();}}
-function txt(s,x,y,sz,col,align=‘center’,weight=‘bold’){ctx.save();ctx.font=`${weight} ${sz}px 'Georgia',serif`;ctx.fillStyle=col;ctx.textAlign=align;ctx.fillText(s,x,y);ctx.restore();}
-function txti(s,x,y,sz,col,align=‘center’){ctx.save();ctx.font=`italic ${sz}px 'Georgia',serif`;ctx.fillStyle=col;ctx.textAlign=align;ctx.fillText(s,x,y);ctx.restore();}
-function glow(s,x,y,sz,col,gc,blur=14){ctx.save();ctx.font=`bold ${sz}px 'Georgia',serif`;ctx.shadowColor=gc;ctx.shadowBlur=blur;ctx.fillStyle=col;ctx.textAlign=‘center’;ctx.fillText(s,x,y);ctx.restore();}
-function btn(label,cx,cy,w,h,col,hov=false,r=h/2){
-const x=cx-w/2,y=cy-h/2;
-const g2=ctx.createLinearGradient(x,y,x,y+h);
-g2.addColorStop(0,hov?lc(col,35):lc(col,12));g2.addColorStop(1,col);
-ctx.fillStyle=g2;rr(x,y,w,h,r);ctx.fill();
-ctx.strokeStyle=lc(col,45);ctx.lineWidth=1.5;rr(x,y,w,h,r);ctx.stroke();
-txt(label,cx,cy+h*0.15,Math.min(h*0.42,15),’#fff’);
-}
-function lc(hex,a){try{let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return `rgb(${Math.min(255,r+a)},${Math.min(255,g+a)},${Math.min(255,b+a)})`;}catch(e){return hex;}}
-function dc(hex,a){try{let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return `rgb(${Math.max(0,r-a)},${Math.max(0,g-a)},${Math.max(0,b-a)})`;}catch(e){return hex;}}
-
-// ── STARS ────────────────────────────────────────────────────
-const stars=[];
-(()=>{for(let i=0;i<250;i++)stars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.6+0.3,s:Math.random()*0.9+0.3});})();
-function drawStars(a=1,gt=0){ctx.save();ctx.globalAlpha=a;for(const s of stars){const br=0.4+0.6*Math.sin(gt*s.s+s.x*9);ctx.fillStyle=`rgba(255,255,255,${br*0.72})`;ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2);ctx.fill();}ctx.restore();}
-
-// ================================================================
-//  DRAGON DATA  —  with real mythology attributes
-// ================================================================
-const DRAGONS=[
-{ id:‘nightfury’, name:‘Night Fury’, cls:‘Strike Class · Viking HTTYD’,city:‘berkhaven’,
-col:’#0a0a1a’,acc:’#00d4ff’,trail:‘rgba(0,160,220,0.55)’,breath:’#00aaff’,breathType:‘Plasma Blast’,
-bodyCol:’#111128’,eyeCol:’#00ff88’,spd:9,sta:8,agi:10,pwr:9,
-maxS:440,minS:65,turn:3.2,lift:1.2,flap:230,drag:0.019,serp:false,rainbow:false,
-food:‘Eel’,foodEm:‘🐟’,pers:‘Playful & Loyal’,
-lore:‘Called “The Unholy Offspring of Lightning and Death Itself” — the most feared and rarest of all dragon species in the Viking archipelago. Their retractable teeth vanish before closing the jaw, making examination nearly impossible. Only one Night Fury has ever been studied: Toothless, by Hiccup Horrendous Haddock III, who discovered they navigate by echolocation, share emotional bonds, and can reach speeds exceeding any other dragon alive.’,
-abils:[‘Plasma Blast’,‘Sonic Dive’,‘Night Cloak’]},
-{ id:‘lung’,name:‘Lung Dragon’,cls:‘Eastern Celestial · China’,city:‘lungshan’,
-col:’#9a6a0a’,acc:’#40e0d0’,trail:‘rgba(80,200,100,0.45)’,breath:’#80ffaa’,breathType:‘Rain Summon’,
-bodyCol:’#c47c10’,eyeCol:’#ff4400’,spd:7,sta:10,agi:7,pwr:8,
-maxS:340,minS:35,turn:2.2,lift:1.9,flap:130,drag:0.012,serp:true,rainbow:false,
-food:‘Pearl’,foodEm:‘🔮’,pers:‘Wise & Patient’,
-lore:‘The divine Lóng (龍) is described in the Shuowen Jiezi dictionary (c.121 CE): “The dragon is the chief of scaly creatures. It can become dark or bright, large or small; it can shorten or lengthen its body; it ascends to the sky in spring and remains in deep waters in autumn.” Nine sacred attributes: deer horns, camel head, demon eyes, serpent neck, clam belly, carp scales, eagle claws, tiger soles, and ox ears. The carrier of the Cintamani wish-granting pearl.’,
-abils:[‘Rain Summon’,‘Cloud Ride’,‘Pearl Wish’]},
-{ id:‘oillipheist’,name:‘Oilliphéist’,cls:‘Celtic Serpent · Ireland’,city:‘tarasknot’,
-col:’#173517’,acc:’#80ff40’,trail:‘rgba(60,160,20,0.5)’,breath:’#a0ff00’,breathType:‘Lightning Coil’,
-bodyCol:’#214a21’,eyeCol:’#ddff00’,spd:8,sta:9,agi:9,pwr:8,
-maxS:400,minS:45,turn:3.8,lift:1.4,flap:195,drag:0.016,serp:true,rainbow:false,
-food:‘Bog Herb’,foodEm:‘🌿’,pers:‘Mischievous & Swift’,
-lore:‘Recorded in the Martyrology of Oengus (c.830 CE) and later medieval sources: the great Oilliphéist lay waiting beneath the Irish bogs until it heard St. Patrick's bell driving it from the land. As it fled, its writhing body carved the valley of the River Shannon. The Beithir of Highland Gaelic tradition was a wingless thunderbolt-serpent haunting mountain passes, described in the Carmina Gadelica as “the most dangerous of all creatures that dwell in the wilderness.”’,
-abils:[‘Lightning Coil’,‘Mist Cloak’,‘Stone Recall’]},
-{ id:‘aidohwedo’,name:‘Aido-Hwedo’,cls:‘Rainbow Cosmic · Fon / Dahomey’,city:‘aidoveil’,
-col:’#8a2a00’,acc:’#ff66cc’,trail:‘rainbow’,breath:’#ff8800’,breathType:‘Rainbow Lift’,
-bodyCol:’#aa3300’,eyeCol:’#ffcc00’,spd:8,sta:9,agi:8,pwr:9,
-maxS:420,minS:40,turn:2.9,lift:1.8,flap:180,drag:0.013,serp:true,rainbow:true,
-food:‘Colorful Offering’,foodEm:‘🌈’,pers:‘Majestic & Balanced’,
-lore:‘From the oral traditions of the Fon people of Dahomey (modern Bénin), recorded by anthropologist Melville Herskovits in Dahomey: An Ancient West African Kingdom (1938): “Aido-Hwedo was the first being. The creator rode upon Aido-Hwedo as one rides a horse, and wherever they went, mountains rose from the serpent's dung. When creation was complete, Aido-Hwedo coiled beneath the world in the sea to support its weight. The rainbow that follows rain is the body of Aido-Hwedo arched across the sky.”’,
-abils:[‘Rainbow Lift’,‘Storm Surge’,‘Creation Arch’]}
+// ====================== FULL TRAINER LIBRARY ======================
+const trainerLibrary = [
+    {id:1, name:"Charm of Making Surge", element:"ANY", classReq:null, icon:"⚡", cost:1, effect:"energy", desc:"Gain +1 extra Energy this turn"},
+    {id:2, name:"Seasonal Overflow", element:"ANY", classReq:null, icon:"🌊", cost:1, effect:"energy", desc:"Gain +1 extra Energy this turn"},
+    {id:3, name:"Mana Echo", element:"ANY", classReq:null, icon:"🔄", cost:0, effect:"energy", desc:"Gain +1 Energy this turn"},
+    {id:4, name:"Primal Flux", element:"ANY", classReq:null, icon:"🌟", cost:2, effect:"energy", desc:"Gain +2 Energy this turn"},
+    {id:5, name:"House Resonance", element:"FIRE", classReq:null, icon:"🔥", cost:1, effect:"energy", desc:"Gain +1 Energy (House FIRE only)"},
+    {id:6, name:"Magic Tide", element:"WATER", classReq:null, icon:"💧", cost:1, effect:"energy", desc:"Gain +1 Energy (Magic WATER only)"},
+    {id:7, name:"Aether Surge", element:"AIR", classReq:null, icon:"🌬️", cost:1, effect:"energy", desc:"Gain +1 Energy (Magic AIR only)"},
+    {id:8, name:"Stone Heart", element:"EARTH", classReq:null, icon:"🌍", cost:1, effect:"energy", desc:"Gain +1 Energy (House EARTH only)"},
+    {id:9, name:"Hatch Blessing", element:"ANY", classReq:null, icon:"🥚", cost:1, effect:"heal", desc:"Heal your dragon for 40 HP"},
+    {id:10, name:"Primal Vitality", element:"ANY", classReq:null, icon:"❤️", cost:1, effect:"heal", desc:"Heal your dragon for 40 HP"},
+    {id:11, name:"Titanic Vitality", element:"ANY", classReq:"Legendary Titan", icon:"🛡️", cost:2, effect:"heal", desc:"Heal your dragon for 60 HP"},
+    {id:12, name:"Guardian's Embrace", element:"ANY", classReq:"Rare Guardian", icon:"🛡️", cost:2, effect:"heal", desc:"Heal your dragon for 60 HP"},
+    {id:13, name:"Tempest Rejuvenation", element:"ANY", classReq:"Epic Tempest", icon:"🌩️", cost:2, effect:"heal", desc:"Heal your dragon for 60 HP"},
+    {id:14, name:"Dragonblood Infusion", element:"ANY", classReq:null, icon:"🩸", cost:1, effect:"heal", desc:"Heal your dragon for 40 HP"},
+    {id:15, name:"Elemental Harmony", element:"ANY", classReq:null, icon:"🌍", cost:1, effect:"heal", desc:"Heal your dragon for 40 HP"},
+    {id:16, name:"Arcane Pulse", element:"ANY", classReq:null, icon:"✨", cost:1, effect:"damage", desc:"Deal 25 damage to the enemy"},
+    {id:17, name:"Elemental Torrent", element:"ANY", classReq:null, icon:"🌪️", cost:2, effect:"damage", desc:"Deal 45 damage to the enemy"},
+    {id:18, name:"Primal Roar", element:"ANY", classReq:null, icon:"🐉", cost:2, effect:"damage", desc:"Deal 45 damage to the enemy"},
+    {id:19, name:"Tempest Fury", element:"ANY", classReq:"Epic Tempest", icon:"🌪️", cost:2, effect:"damage", desc:"Deal 45 damage to the enemy"},
+    {id:20, name:"Keeper Binding", element:"ANY", classReq:null, icon:"🔗", cost:1, effect:"boost", desc:"Deal 30 extra damage this turn"},
+    {id:21, name:"Spike Forge", element:"ANY", classReq:null, icon:"🗡️", cost:1, effect:"boost", desc:"Deal 30 extra damage this turn"},
+    {id:22, name:"Strength of Ages", element:"ANY", classReq:null, icon:"💪", cost:2, effect:"boost", desc:"Deal 40 extra damage this turn"},
+    {id:23, name:"Genetic Awakening", element:"ANY", classReq:null, icon:"🧬", cost:2, effect:"boost", desc:"Deal 40 extra damage this turn"},
+    {id:24, name:"Titan's Dominion", element:"ANY", classReq:"Legendary Titan", icon:"👑", cost:2, effect:"boost", desc:"Deal 50 extra damage this turn"},
+    {id:25, name:"Scout's Phantom", element:"ANY", classReq:"Rare Scout", icon:"👻", cost:1, effect:"boost", desc:"Deal 30 extra damage this turn"},
+    {id:26, name:"CoM Resonance", element:"ANY", classReq:null, icon:"📜", cost:1, effect:"boost", desc:"Deal 30 extra damage this turn"},
+    {id:27, name:"Keeper's Oath", element:"ANY", classReq:null, icon:"🔒", cost:2, effect:"boost", desc:"Deal 40 extra damage this turn"},
+    {id:28, name:"Mythic Echo", element:"ANY", classReq:null, icon:"🌌", cost:2, effect:"boost", desc:"Deal 40 extra damage this turn"},
+    {id:29, name:"Rarity Ascension", element:"ANY", classReq:null, icon:"⭐", cost:2, effect:"boost", desc:"Deal 40 extra damage this turn"},
+    {id:30, name:"Dragonknight Ambush", element:"ANY", classReq:null, icon:"🛡️", cost:1, effect:"trap", desc:"Deal 30 damage to the enemy"},
+    {id:31, name:"Echo Veil", element:"ANY", classReq:null, icon:"🌫️", cost:1, effect:"trap", desc:"Deal 30 damage to the enemy"},
+    {id:32, name:"Shadow Veil", element:"ANY", classReq:"Shadow Native", icon:"🌑", cost:0, effect:"trap", desc:"Deal 25 damage to the enemy"},
+    {id:33, name:"Earthroot Fortress", element:"EARTH", classReq:null, icon:"🌍", cost:1, effect:"trap", desc:"Deal 30 damage to the enemy"},
+    {id:34, name:"Fireheart Trap", element:"FIRE", classReq:null, icon:"🔥", cost:1, effect:"trap", desc:"Deal 30 damage to the enemy"},
+    {id:35, name:"Waterveil Counter", element:"WATER", classReq:null, icon:"💧", cost:1, effect:"trap", desc:"Deal 30 damage to the enemy"},
+    {id:36, name:"Airstrike Ambush", element:"AIR", classReq:null, icon:"🌬️", cost:1, effect:"trap", desc:"Deal 30 damage to the enemy"},
+    {id:37, name:"Guardian's Bastion", element:"ANY", classReq:"Rare Guardian", icon:"🏰", cost:1, effect:"trap", desc:"Deal 30 damage to the enemy"},
+    {id:38, name:"Tempest Howl", element:"ANY", classReq:"Epic Tempest", icon:"🌩️", cost:1, effect:"disrupt", desc:"Deal 25 damage to the enemy"},
+    {id:39, name:"House Rivalry", element:"ANY", classReq:null, icon:"⚔️", cost:1, effect:"disrupt", desc:"Deal 25 damage to the enemy"},
+    {id:40, name:"Magic Nullify", element:"ANY", classReq:"Shadow Native", icon:"🌑", cost:0, effect:"disrupt", desc:"Deal 25 damage to the enemy"},
+    {id:41, name:"Energy Drain", element:"ANY", classReq:null, icon:"⚡", cost:2, effect:"disrupt", desc:"Deal 30 damage to the enemy"},
+    {id:42, name:"Seasonal Disruption", element:"ANY", classReq:null, icon:"🌊", cost:1, effect:"disrupt", desc:"Deal 25 damage to the enemy"},
+    {id:43, name:"Flame Veil", element:"FIRE", classReq:null, icon:"🔥", cost:1, effect:"trap", desc:"Deal 35 damage to the enemy (House FIRE)"},
+    {id:44, name:"Aqua Shield", element:"WATER", classReq:null, icon:"💧", cost:1, effect:"heal", desc:"Heal your dragon for 50 HP (Magic WATER)"},
+    {id:45, name:"Wind Blade", element:"AIR", classReq:null, icon:"🌬️", cost:2, effect:"damage", desc:"Deal 50 damage to the enemy (Magic AIR)"},
+    {id:46, name:"Stone Surge", element:"EARTH", classReq:null, icon:"🌍", cost:1, effect:"boost", desc:"Deal 35 extra damage this turn (House EARTH)"},
+    {id:47, name:"Primal Harmony", element:"ANY", classReq:null, icon:"🌟", cost:2, effect:"heal", desc:"Heal your dragon for 55 HP"},
+    {id:48, name:"Legendary Overcharge", element:"ANY", classReq:"Legendary Titan", icon:"👑", cost:3, effect:"boost", desc:"Deal 70 extra damage this turn"},
+    {id:49, name:"Shadow Eclipse", element:"ANY", classReq:"Shadow Native", icon:"🌑", cost:0, effect:"disrupt", desc:"Deal 40 damage to the enemy"},
+    {id:50, name:"Scout's Mirage", element:"ANY", classReq:"Rare Scout", icon:"👻", cost:1, effect:"trap", desc:"Deal 35 damage to the enemy"},
+    {id:51, name:"Guardian Wall", element:"ANY", classReq:"Rare Guardian", icon:"🪨", cost:1, effect:"heal", desc:"Heal your dragon for 45 HP"},
+    {id:52, name:"Tempest Vortex", element:"ANY", classReq:"Epic Tempest", icon:"🌪️", cost:2, effect:"damage", desc:"Deal 55 damage to the enemy"},
+    {id:53, name:"CoM Ignition", element:"FIRE", classReq:null, icon:"📜", cost:2, effect:"boost", desc:"Deal 45 extra damage this turn"},
+    {id:54, name:"Keeper's Tide", element:"WATER", classReq:null, icon:"🪔", cost:2, effect:"heal", desc:"Heal your dragon for 50 HP"},
+    {id:55, name:"Dragon's Breath", element:"ANY", classReq:null, icon:"🐉", cost:3, effect:"damage", desc:"Deal 60 damage to the enemy"},
+    {id:56, name:"Genetic Lock", element:"ANY", classReq:null, icon:"🧬", cost:1, effect:"trap", desc:"Deal 30 damage to the enemy"},
+    {id:57, name:"Rarity Pulse", element:"ANY", classReq:null, icon:"⭐", cost:2, effect:"boost", desc:"Deal 40 extra damage this turn"},
+    {id:58, name:"Elemental Fury", element:"ANY", classReq:null, icon:"🌋", cost:2, effect:"damage", desc:"Deal 50 damage to the enemy"},
+    {id:59, name:"Soul Bind", element:"ANY", classReq:null, icon:"🔗", cost:1, effect:"disrupt", desc:"Deal 30 damage to the enemy"},
+    {id:60, name:"Wing Storm", element:"AIR", classReq:null, icon:"🌬️", cost:1, effect:"boost", desc:"Deal 35 extra damage this turn"},
+    {id:61, name:"Rooted Defense", element:"EARTH", classReq:null, icon:"🌳", cost:1, effect:"heal", desc:"Heal your dragon for 45 HP"},
+    {id:62, name:"Inferno Strike", element:"FIRE", classReq:null, icon:"🔥", cost:2, effect:"damage", desc:"Deal 50 damage to the enemy"},
+    {id:63, name:"Tidal Wave", element:"WATER", classReq:null, icon:"🌊", cost:2, effect:"damage", desc:"Deal 50 damage to the enemy"},
+    {id:64, name:"Thunderclap", element:"AIR", classReq:null, icon:"⚡", cost:2, effect:"damage", desc:"Deal 50 damage to the enemy"},
+    {id:65, name:"Earthquake", element:"EARTH", classReq:null, icon:"🌍", cost:2, effect:"damage", desc:"Deal 50 damage to the enemy"},
+    {id:66, name:"Balanced Scale", element:"ANY", classReq:null, icon:"⚖️", cost:1, effect:"heal", desc:"Heal your dragon for 35 HP"},
+    {id:67, name:"Fury of the Ancients", element:"ANY", classReq:null, icon:"🦖", cost:3, effect:"boost", desc:"Deal 60 extra damage this turn"},
+    {id:68, name:"Veil of Eternity", element:"ANY", classReq:null, icon:"🌌", cost:0, effect:"trap", desc:"Deal 20 damage to the enemy"},
+    {id:69, name:"Keeper's Legacy", element:"ANY", classReq:null, icon:"🪔", cost:2, effect:"energy", desc:"Gain +2 Energy this turn"},
+    {id:70, name:"Primal Dominion", element:"ANY", classReq:"Legendary Titan", icon:"👑", cost:3, effect:"damage", desc:"Deal 70 damage to the enemy"},
+    {id:71, name:"Titanic Shield", element:"ANY", classReq:"Legendary Titan", icon:"🛡️", cost:2, effect:"shield", desc:"Reduce incoming damage by 50% for 2 turns (Legendary Titan)"},
+    {id:72, name:"Shadow Reflect", element:"ANY", classReq:"Shadow Native", icon:"🌑", cost:1, effect:"reflect", desc:"Reflect 30 damage back to enemy (Shadow Native)"},
+    {id:73, name:"Blood Drain", element:"ANY", classReq:null, icon:"🩸", cost:2, effect:"lifesteal", desc:"Deal 35 damage and heal yourself for half"},
+    {id:74, name:"Burning Scales", element:"FIRE", classReq:null, icon:"🔥", cost:2, effect:"burn", desc:"Deal 15 burn damage for 3 turns (House FIRE)"},
+    {id:75, name:"Critical Strike", element:"ANY", classReq:"Epic Tempest", icon:"⚡", cost:2, effect:"crit", desc:"Next attack has 50% chance to double damage (Epic Tempest)"},
+    {id:76, name:"Energy Theft", element:"AIR", classReq:null, icon:"🌬️", cost:1, effect:"steal", desc:"Steal 1 energy from enemy (Magic AIR)"},
+    {id:77, name:"Defensive Coil", element:"EARTH", classReq:null, icon:"🌳", cost:0, effect:"coil", desc:"Skip your next 2 turns, then gain +4 Energy (House EARTH)"},
+    {id:78, name:"Rare Guardian Wall", element:"ANY", classReq:"Rare Guardian", icon:"🪨", cost:2, effect:"shield", desc:"Reduce incoming damage by 40% for 3 turns (Rare Guardian)"},
+    {id:79, name:"Scout's Mirage", element:"ANY", classReq:"Rare Scout", icon:"👻", cost:1, effect:"reflect", desc:"Reflect 25 damage back to enemy (Rare Scout)"},
+    {id:80, name:"Common Vitality Surge", element:"ANY", classReq:"Common Native", icon:"❤️", cost:1, effect:"heal", desc:"Heal 50 HP and gain +1 Energy (Common Native)"},
+    {id:81, name:"Primal Life Steal", element:"ANY", classReq:null, icon:"🩸", cost:3, effect:"lifesteal", desc:"Deal 50 damage and heal yourself for half"},
+    {id:82, name:"Elemental Burn", element:"ANY", classReq:null, icon:"🔥", cost:2, effect:"burn", desc:"Apply 20 burn damage for 2 turns"},
+    {id:83, name:"CoM Overcharge", element:"ANY", classReq:"Legendary Titan", icon:"📜", cost:2, effect:"crit", desc:"Next CoM does double damage (Legendary Titan)"},
+    {id:84, name:"Keeper's Drain", element:"WATER", classReq:null, icon:"💧", cost:2, effect:"steal", desc:"Steal 2 energy from enemy (Magic WATER)"},
+    {id:85, name:"Shadow Coil", element:"ANY", classReq:"Shadow Native", icon:"🌑", cost:0, effect:"coil", desc:"Skip your next turn and gain +5 Energy (Shadow Native)"},
+    {id:86, name:"Tempest Reflect", element:"ANY", classReq:"Epic Tempest", icon:"🌪️", cost:2, effect:"reflect", desc:"Reflect 40 damage back to enemy (Epic Tempest)"},
+    {id:87, name:"Rare Life Link", element:"ANY", classReq:"Rare Guardian", icon:"🛡️", cost:2, effect:"lifesteal", desc:"Deal 30 damage and heal 30 HP (Rare Guardian)"},
+    {id:88, name:"Fire Crit Surge", element:"FIRE", classReq:null, icon:"🔥", cost:2, effect:"crit", desc:"Next attack has 60% chance to crit (House FIRE)"},
+    {id:89, name:"Water Shield", element:"WATER", classReq:null, icon:"💧", cost:2, effect:"shield", desc:"Reduce incoming damage by 35% for 2 turns (Magic WATER)"},
+    {id:90, name:"Air Energy Theft", element:"AIR", classReq:null, icon:"🌬️", cost:1, effect:"steal", desc:"Steal 1 energy from enemy (Magic AIR)"}
 ];
 
-// ================================================================
-//  CITY DATA  —  10 mythic realms
-// ================================================================
-const CITIES=[
-{id:‘berkhaven’,name:‘Berkhaven’,sub:‘Norse Realm of Storms’,
-mx:0.18,my:0.28,sky1:’#0c1838’,sky2:’#1a3360’,sky3:’#284a88’,acc:’#4a8fff’,icon:‘⚡’,dr:‘nightfury’,
-foods:[‘Eel’,‘Smoked Fish’,‘Herring’],treas:[‘Rune Stone’,‘Viking Helm’,‘Mead Horn’,‘Dragon Tooth’],
-lore:‘Where Viking riders first learned that fire and friendship were the same thing, and that the most fearsome beast could become the most faithful companion.’,
-myth:‘Norse dragons include the world-serpent Jörmungandr, the gnawing Níðhöggr, and the gold-cursed Fáfnir.’},
-{id:‘lungshan’,name:‘Lungshan’,sub:‘Misty Celestial Mountains’,
-mx:0.73,my:0.30,sky1:’#0e1e0e’,sky2:’#1a3a2a’,sky3:’#2a5a40’,acc:’#40e0d0’,icon:‘☁️’,dr:‘lung’,
-foods:[‘Pearl’,‘Sacred Lotus’,‘Jade Fruit’],treas:[‘Dragon Pearl’,‘Imperial Seal’,‘Jade Disc’,‘Bamboo Scroll’],
-lore:‘Ancient floating mountains where cloud-riding dragons bring the rains of prosperity and answer prayers of the worthy.’,
-myth:‘The Dragon Kings of the Four Seas rule rivers and rainfall from crystal underwater palaces beneath the waves.’},
-{id:‘ryugu’,name:‘Ryūgū Harbor’,sub:‘Crystal Sea Kingdom’,
-mx:0.84,my:0.50,sky1:’#080e30’,sky2:’#142858’,sky3:’#1e4a88’,acc:’#00aaff’,icon:‘🌊’,dr:‘lung’,
-foods:[‘Sea Gem’,‘Tide Pearl’,‘Coral Berry’],treas:[‘Tide Jewel’,‘Dragon Scale’,‘Temple Bell’,‘Wave Crystal’],
-lore:“Ryūjin’s palace beneath the crystal waves, where time flows differently and sea dragons guard the tide jewels.”,
-myth:‘Yamata no Orochi ravaged the land until storm god Susanoo defeated it — from its tail came the divine sword Kusanagi.’},
-{id:‘ishtar’,name:‘Ishtar Spires’,sub:‘Ancient Ziggurat Gates’,
-mx:0.52,my:0.63,sky1:’#2a1408’,sky2:’#501e0a’,sky3:’#8a3a10’,acc:’#ffaa00’,icon:‘🏛️’,dr:‘nightfury’,
-foods:[‘Sacred Date’,‘Honey Cake’,‘Lapis Bead’],treas:[‘Lapis Talisman’,‘Clay Tablet’,‘Serpent Idol’,‘Gate Brick’],
-lore:‘Ancient ziggurats rise through golden clouds above the Gates of Ishtar, where primordial serpents guard eternal secrets.’,
-myth:‘The Mušḫuššu decorated the Ishtar Gate. Tiamat, chaos-dragon of the salt sea, was slain by Marduk whose victory formed sky and earth.’},
-{id:‘wawel’,name:‘Wawel Crag’,sub:‘Medieval Cliff Kingdom’,
-mx:0.35,my:0.40,sky1:’#12121e’,sky2:’#22203a’,sky3:’#3a3460’,acc:’#cc4422’,icon:‘🏰’,dr:‘oillipheist’,
-foods:[‘Roast Lamb’,‘Honey Bread’,‘Dragon Pepper’],treas:[‘Scale Armor’,‘Riddle Box’,“Knight’s Crest”,‘Ancient Coin’],
-lore:‘Medieval cliffs where fire-drakes guard ancient gold and challenge heroes with riddles and flame.’,
-myth:‘Smok Wawelski terrorized Kraków until tricked with sulfur-stuffed lamb — the cave beneath Wawel Castle remains.’},
-{id:‘dragonhill’,name:‘Dragon Hill Vale’,sub:‘Welsh Prophecy Highlands’,
-mx:0.22,my:0.48,sky1:’#081408’,sky2:’#163020’,sky3:’#245838’,acc:’#ff2200’,icon:‘🐉’,dr:‘oillipheist’,
-foods:[‘Welsh Leek’,‘Honey Mead’,‘Dragon Bread’],treas:[‘Pendragon Seal’,“Merlin’s Staff”,‘Chalk Rune’,‘Red Dragon Flag’],
-lore:“Rolling green highlands where the Red Dragon battles the White beneath Merlin’s prophecy.”,
-myth:‘Y Ddraig Goch on the Welsh flag dates to the 9th-century Historia Brittonum. “Pendragon” means Chief Dragon-Head.’},
-{id:‘teotihuacan’,name:‘Teotihuacan’,sub:‘Pyramid of the Feathered Serpent’,
-mx:0.12,my:0.60,sky1:’#0c1e04’,sky2:’#1a3a0c’,sky3:’#306018’,acc:’#88cc00’,icon:‘🌿’,dr:‘aidohwedo’,
-foods:[‘Cacao Pod’,‘Jade Flower’,‘Maize Offering’],treas:[‘Jade Serpent’,‘Feather Mosaic’,‘Obsidian Mirror’,‘Sun Stone’],
-lore:‘Stepped pyramids rise from jungle canopy where Quetzalcoatl's feathered serpents circle in sky dances of creation.’,
-myth:‘Quetzalcoatl — Feathered Serpent — was creator, wind god, and patron of arts across Mesoamerica.’},
-{id:‘naga’,name:‘Naga Temples’,sub:‘River Guardian Shrines’,
-mx:0.62,my:0.72,sky1:’#081824’,sky2:’#123040’,sky3:’#1e4a5a’,acc:’#00ccaa’,icon:‘🐍’,dr:‘lung’,
-foods:[‘Sacred Lotus’,‘River Pearl’,‘Turmeric’],treas:[‘Naga Jewel’,‘Temple Bell’,‘Cobra Crown’,‘Sacred River Stone’],
-lore:‘Jungle rivers and ancient temple spires where multi-headed Nagas guard sacred waters and grant boons.’,
-myth:‘Nagas are semi-divine serpents in Hindu and Buddhist tradition — guardians of water, fertility, and the underworld.’},
-{id:‘tarasknot’,name:“Tara’s Knot”,sub:‘Emerald Celtic Sky-Islands’,
-mx:0.14,my:0.38,sky1:’#040e04’,sky2:’#0c2010’,sky3:’#184020’,acc:’#44ff22’,icon:‘🍀’,dr:‘oillipheist’,
-foods:[‘Bog Herb’,‘Wild Salmon’,‘Hawthorn Berry’],treas:[‘Celtic Knot Stone’,‘Ogham Stick’,‘Shamrock Brooch’,‘Lough Pearl’],
-lore:‘Misty emerald islands with ancient stone circles and round towers where Celtic serpents weave through the veil between worlds.’,
-myth:‘Irish mythology features the Oilliphéist, Muirdris of the loughs, Beithir lightning-serpents, and three-headed Ellén Trechend.’},
-{id:‘aidoveil’,name:‘Aido Veil’,sub:‘African Rainbow Sky-Realm’,
-mx:0.40,my:0.78,sky1:’#160800’,sky2:’#301200’,sky3:’#5a2808’,acc:’#ff8800’,icon:‘🌈’,dr:‘aidohwedo’,
-foods:[‘Colorful Bead’,‘Kola Nut’,‘Millet Offering’],treas:[‘Rainbow Scale’,‘Cosmic Coil’,‘Creation Egg’,‘Baobab Seed’],
-lore:‘Cascading waterfalls form rainbow arches over floating baobab groves where cosmic double-headed serpents carry the weight of the sky.’,
-myth:‘Aido-Hwedo helped Mawu-Lisa shape the world. The Inkanyamba is the Zulu storm-serpent causing hurricanes when it rises.’}
+// ====================== BOSSES ======================
+const bossJSONs = [
+    {id:49, dragon:{egg:{magicElementRarity:193},dragon:{house:"FIRE",magicElement:"EARTH",thumbnail:"https://media.drakaria.com/dk/000000/GENESIS/49_thumbnail.png",nameInfo:{longName:"Vuur - Aarde - Yesta - Fundamentum"},magicInfo:{stability:3470,agility:108.06916426512969},size:0.9062488252208585}},"charmOfMaking":"0x69a61b4426c96ab3ffa3ce0fb157503438ae0b2c6f6544d6d31d3966f061c197"},
+    {id:124, dragon:{egg:{magicElementRarity:237},dragon:{house:"EARTH",magicElement:"FIRE",thumbnail:"https://media.drakaria.com/dk/000001/EARTH/124_thumbnail.png",nameInfo:{longName:"მიწა - Flama - Nlodata - Petra I"},magicInfo:{stability:1146,agility:327.22513089005236},size:0.9557715149551884}},"charmOfMaking":"0x150794bf0836b7a5e07e240d33e351c1b4594627bef809be42b31514d54ded7c"},
+    {id:677, dragon:{egg:{magicElementRarity:43},dragon:{house:"AIR",magicElement:"AIR",thumbnail:"https://media.drakaria.com/dk/000001/WATER/677_thumbnail.png",nameInfo:{longName:"Espazioa - Ruimte - RENIRANO - Batu I"},magicInfo:{stability:599380,agility:0.6256465013847643},size:0.9}},"charmOfMaking":"0x824606fe0ca8aebc95017d113df8d8e8bf76427af99a9b527ef4d8b40c4e2b6a"},
+    {id:2750, dragon:{egg:{magicElementRarity:236},dragon:{house:"FIRE",magicElement:"AIR",thumbnail:"https://media.drakaria.com/dk/000001/FIRE/2750_thumbnail.png",nameInfo:{longName:"ಬೆಂಕಿ - Powietrze - Ardente - Klippe I"},magicInfo:{stability:940545,agility:0.3987050061400571},size:0.9092246657628366}},"charmOfMaking":"0x5688eefe7a82b81e0ab412a56953ad1d4549959727242b26c0650974a5daec9f"}
 ];
 
-// ================================================================
-//  CODEX — Real historical quotes & sources
-// ================================================================
-const CODEX=[
-{title:‘Night Fury — Viking Lore’,cat:‘Norse / HTTYD’,dragon:‘nightfury’,
-quote:’“Speed: unknown. Size: unknown. The unholy offspring of lightning and death itself. Never engage this dragon. Your only chance: Hide and pray it does not find you.”’,
-source:’— Book of Dragons, DreamWorks How to Train Your Dragon (2010)’,
-text:‘The Night Fury appears in no surviving medieval Norse dragon catalogue, for the simple reason that none who encountered one lived to record it. In genuine Norse mythology, dragons (drekkar) were categorized as orms — great serpents of cosmic or mundane dread. Jörmungandr, the Midgard Serpent, circled the world-ocean holding its tail in its mouth. The Prose Edda (c.1220 CE) records that at Ragnarök, Jörmungandr will release its tail and poison the skies. Níðhöggr gnaws eternally at the roots of Yggdrasil. Fáfnir transformed from dwarf to dragon through greed, and was slain by Sigurd — who, tasting his blood, gained the speech of birds.’},
-{title:‘Lung Dragon — Nine Sacred Virtues’,cat:‘Classical Chinese’,dragon:‘lung’,
-quote:’“The dragon is the chief of the three hundred and sixty scaly animals. Its power appears in its claws; its splendour in its scales; its subtlety in its horns. It can become visible or invisible, can expand or contract its body.”’,
-source:’— Shuowen Jiezi (說文解字), Xu Shen, c.121 CE’,
-text:‘The Bencao Gangmu (本草綱目, 1596 CE) by Li Shizhen — the great Ming Dynasty pharmacopeia — dedicates an entire chapter to the medicinal and mythological properties of dragon parts, including “dragon bones” (fossil bones). The Shanhaijing (山海經, “Classic of Mountains and Seas,” c.4th century BCE) describes hundreds of regional dragon variants. The Tang Dynasty poet Du Fu wrote: “The Yellow Dragon, cloud-walking, with cries like deep thunder, came and went, creating all things.” Five-clawed Imperial dragons could only appear on the Son of Heaven's robes; wearing this symbol without sanction was punishable by death.’},
-{title:‘Ryū — Japanese Sea Serpents’,cat:‘Classical Japanese’,dragon:‘lung’,
-quote:’“At the bottom of the sea, there is a palace of Dragon King called Ryūgū-jō, in which Ryūjin dwells. It is a beautiful place full of red and white coral trees, sea weed and pebbles of precious stones.”’,
-source:’— Urashima Tarō, oral tradition, first recorded Nihon Shoki (720 CE)’,
-text:‘The Kojiki (古事記, 712 CE) — Japan's oldest chronicle — records the slaying of Yamata no Orochi, the eight-headed eight-tailed serpent that had terrorized the land of Izumo, devouring young women each year. Storm god Susanoo-no-Mikoto defeated it by filling eight tubs of sake and waiting for the beast to drink itself senseless. When Susanoo cut through its middle tail, his sword struck something hard: the divine sword Kusanagi-no-Tsurugi (天叢雲剣), which became one of Japan's three Imperial Treasures, still enshrined today at Atsuta Shrine in Nagoya.’},
-{title:‘Tiamat — Primordial Chaos Dragon’,cat:‘Mesopotamian / Babylonian’,dragon:‘nightfury’,
-quote:’“When skies above were not yet named, nor earth below pronounced by name, Apsu, the first one, their begetter, and maker Tiamat, who bore them all — had mixed their waters together… Then it was that the gods were formed within them.”’,
-source:’— Enuma Elish (Epic of Creation), Babylonian, c.12th century BCE, Tablet I’,
-text:‘The Enuma Elish, recovered from the library of Ashurbanipal at Nineveh (c.668–627 BCE), is the oldest known dragon myth. Tiamat — the primordial salt-water sea, depicted as a vast dragon — was slain by Marduk: “He split her like a shellfish into two parts: half of her he set up and ceiled it as sky, pulled down the bar and posted guards. He bade them to allow not her waters to escape.” (Tablet IV). The Mušḫuššu serpent decorating the Ishtar Gate of Babylon (604–562 BCE) — excavated by Robert Koldewey 1899–1914 — is now partially housed in the Pergamon Museum, Berlin.’},
-{title:‘Smok Wawelski — The Kraków Dragon’,cat:‘Polish / Slavic’,dragon:‘oillipheist’,
-quote:’“Under the Wawel hill there lurked a terrible dragon, whom in the vernacular the people were wont to call Wawel the Dragon. This dragon would devour cattle and men; there was no brave man brave enough to fight with him.”’,
-source:’— Chronica Polonorum, Wincenty Kadłubek (Vincentius Kadlubonis), c.1190 CE’,
-text:‘The Chronicle of Greater Poland (Kronika Wielkopolska, c.1273 CE) adds the cobbler Skuba's solution: “He stuffed the hide of a ram with burning sulfur and pitch, and placed it before the dragon's den. The dragon devoured the ram and its belly began to burn. He ran to the Vistula and drank and drank — and finally burst asunder.” The Smocza Jama (Dragon's Den) beneath Wawel Castle in Kraków is a real cave system, 270 meters long, open to visitors today. A steel dragon sculpture at its entrance breathes real fire via a gas jet.’},
-{title:‘Y Ddraig Goch — The Red Dragon of Wales’,cat:‘Welsh / Arthurian’,dragon:‘oillipheist’,
-quote:’“In the pool there lay two serpents asleep — one white, the other red. When a jar was placed over each, the contest between the serpents caused your castle to fall. The white serpent is the dragon of the Saxons who occupy several provinces and districts of Britain. The red serpent is your country's dragon.”’,
-source:’— Historia Brittonum (History of the Britons), attributed to Nennius, c.830 CE’,
-text:‘Nennius records Merlin's (Ambrosius Aurelianus') prophecy to Vortigern, predicting the Red Dragon's ultimate victory over the White as a symbol of Welsh sovereignty. The dragon appears on the Welsh flag — Draig Goch — from at least the reign of Cadwaladr ap Cadwallon (c.655–682 CE). Geoffrey of Monmouth's Historia Regum Britanniae (c.1138) connects the Pendragon title to Uther and Arthur, making dragon lineage a mark of legitimate kingship in British tradition. The Dragon of Wessex, by contrast, was also a heraldic standard — meaning two dragon-bearing nations met on nearly every medieval English-Welsh battlefield.’},
-{title:‘Quetzalcoatl — The Feathered Serpent’,cat:‘Nahuatl / Mesoamerican’,dragon:‘aidohwedo’,
-quote:’“And they say that when he died he disappeared for four days; it is said he dwelt in the underworld, and for four additional days he was bone. Only after eight days did the great star appear and they called it Quetzalcoatl. And they said: as a lord he newly arose.”’,
-source:’— Leyenda de los Soles (Legend of the Suns), Nahuatl manuscript, c.1558 CE’,
-text:‘Quetzalcoatl (Nahuatl: quetzal, the resplendent bird + coatl, serpent) appears across Mesoamerica as Kukulkan among the Maya and Gukumatz in the Kiche Maya Popol Vuh. The Popol Vuh (c.1554–1558 CE) records that the creator gods, including Feathered Serpent, created humanity from maize after previous attempts from mud and wood failed. The Pyramid of the Feathered Serpent at Teotihuacan (c.200 CE) features 366 carved serpent heads on its facade. The Spanish conquistadors, arriving in 1519, entered a complex political situation partly shaped by the prophecy of Quetzalcoatl's promised return from the east.’},
-{title:‘Naga — Serpent Guardians of Dharma’,cat:‘Sanskrit / Hindu-Buddhist’,dragon:‘lung’,
-quote:’“There are three kinds of nāgas: those that dwell in the sky, those in the waters, and those in the earth. They all have great supernatural power. They can take any form they wish.”’,
-source:’— Mahāvastu (Great Event), Buddhist Sanskrit text, c.2nd century CE’,
-text:‘The Rigveda (c.1500–1200 BCE) mentions Vritra, a serpentine cosmic dragon blocking the rivers and slain by Indra. The Mahabharata (c.400 BCE–400 CE) dedicates an entire book — the Adi Parva — to Naga mythology. Shesha (Ananta, “infinite”) is the cosmic thousand-headed serpent upon whom Vishnu reclines between creation cycles; its hoods form the canopy of the universe. The Jataka Tales record that the naga king Mucalinda sheltered Siddhartha Gautama from a violent rainstorm after his enlightenment by spreading his great hood overhead. Today, naga sculptures guard the entrances of Buddhist temples across Southeast Asia.’},
-{title:‘Oilliphéist & Celtic Serpents’,cat:‘Old Irish / Gaelic’,dragon:‘oillipheist’,
-quote:’“Téit in píast co mór — The great worm goes with fury across the land, leaving behind the valley of the rushing waters, until the saint's bell drives it to the sea from whence it shall not return until the end of ages.”’,
-source:’— Martyrology of Oengus (Félire Óengusso), attributed to Óengus mac Óengobann, c.830 CE’,
-text:‘The Carmina Gadelica (collected by Alexander Carmichael, 1860–1909) preserves oral Gaelic traditions including charms against the Beithir: “Beithir of the terrible swiftness, thou who strikest like lightning from the mountain pass.” The Loch Ness Monster legend's oldest source is Adomnán's Life of St. Columba (c.700 CE), describing a great water beast on the River Ness. The three-headed Ellén Trechend ravaged Ireland until slain by the poet-warrior Amergin in the Cath Maige Mucrama. Celtic serpents, unlike their Eastern counterparts, represented chaos, transformation, and the boundaries between worlds — respected but dangerous.’},
-{title:‘Aido-Hwedo — Rainbow of Creation’,cat:‘Fon / Dahomey / Benin’,dragon:‘aidohwedo’,
-quote:’“In the beginning, Mawu-Lisa and Aido-Hwedo worked together in creation. Wherever they traveled, the mountains formed from the serpent's dung. When all was made, the earth was too heavy, so Aido-Hwedo coiled beneath the ocean to hold it. The rainbow you see is Aido-Hwedo's body arched between sky and earth.”’,
-source:’— Recorded by Melville J. Herskovits, Dahomey: An Ancient West African Kingdom, Vol. II (1938)’,
-text:‘Herskovits conducted fieldwork in Dahomey (modern Bénin) in 1931, documenting the living Fon oral tradition. Aido-Hwedo is described as androgynous or double-headed — one head gold, one iron — representing the dual nature of creation. The serpent is never worshipped through images but through live pythons (Python sebae, the African rock python) kept in temples of the vodun Dan. The Zulu Inkanyamba was documented by ethnographer Henry Callaway in Nursery Tales, Traditions and Histories of the Zulus (1868): “It is said to be a great serpent with a horse's head, living in waterfalls and pools. When it rises into the sky it brings the storm that destroys.”’},
-{title:‘Inkanyamba — Storm of the Waterfall’,cat:‘Zulu / Xhosa / Southern African’,dragon:‘aidohwedo’,
-quote:’“The Inkanyamba lives in the great pool of the waterfall. It is a large serpent. When it comes out and goes up into the sky, rain falls in abundance, accompanied by hail, lightning, and great wind. It is feared by all.”’,
-source:’— Henry Callaway, Nursery Tales, Traditions and Histories of the Zulus (1868)’,
-text:‘The Howick Falls (kwaNoqgaza, “place of the tall one”) in KwaZulu-Natal, South Africa, plunge 95 meters into a dark pool — the legendary home of the Inkanyamba. Modern Zulu communities near the falls still perform propitiation ceremonies. The Grootslang (Afrikaans: “great snake”), documented in Northern Cape traditions, is described as an elephant-serpent hybrid: when the gods created animals they made the Grootslang too powerful and tried to separate it into elephants and snakes — but one escaped whole into the Wonder Cave (Wondergat) near Upington, where it still guards ancient diamonds. Both creatures represent the living power of African natural mythology, inseparable from real landscapes.’}
-];
+// ====================== PARSE FUNCTION ======================
+function parseDragonJSON(jsonObj) {
+    let egg = jsonObj.dragon?.egg || jsonObj.egg || jsonObj;
+    let dr = jsonObj.dragon?.dragon || jsonObj.dragon || jsonObj;
+    let genome = dr.genome || {};
+    let magicInfo = dr.magicInfo || {};
+    let nameInfo = dr.nameInfo || {};
 
-// ── GAME STATE ───────────────────────────────────────────────
-const game={
-dragon:null,city:‘berkhaven’,bond:{},stats:{},
-unlocked:new Set([‘berkhaven’,‘lungshan’,‘tarasknot’,‘aidoveil’]),
-best:{},streak:0,flights:0,t:0
-};
-function initBond(id){
-if(!game.bond[id]){game.bond[id]={bond:50,hunger:80,energy:100,affection:60};game.stats[id]={speed:5,stamina:5,agility:5,power:5};}
-}
-function saveGame(){
-try{localStorage.setItem(‘aetheria_v4’,JSON.stringify({dragon:game.dragon,city:game.city,bond:game.bond,stats:game.stats,unlocked:[…game.unlocked],best:game.best,streak:game.streak,flights:game.flights}));}catch(e){}
-}
-function loadGame(){
-try{const d=JSON.parse(localStorage.getItem(‘aetheria_v4’)||‘null’);if(!d)return;game.dragon=d.dragon;game.city=d.city||‘berkhaven’;game.bond=d.bond||{};game.stats=d.stats||{};game.unlocked=new Set(d.unlocked||[‘berkhaven’,‘lungshan’,‘tarasknot’,‘aidoveil’]);game.best=d.best||{};game.streak=d.streak||0;game.flights=d.flights||0;}catch(e){}
-}
-loadGame();
+    const rarityVal = egg.magicElementRarity || jsonObj.magicElementRarity || 255;
+    const house = dr.house || egg.house || jsonObj.house || "FIRE";
+    const magicElement = dr.magicElement || egg.magicElement || jsonObj.magicElement || "WATER";
+    const stability = magicInfo.stability || jsonObj.stability || 100000;
+    const size = dr.size || egg.size || jsonObj.size || 1;
 
-// ================================================================
-//  DRAGON RENDERING
-// ================================================================
-function drawDragonAt(drg,x,y,scale,angle,wp,facing=1){
-ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.scale(scale*facing,scale);
-if(drg.serp)drawSerpent(drg,wp);else drawWyrm(drg,wp);
-ctx.restore();
+    const dragonClass = classMap[rarityVal] || classMap[255];
+
+    const hp = Math.round(70 + (stability / 1800) * size * ({0:1.45,46:1,193:0.95,242:1.55,252:1.25,255:1.65}[rarityVal] || 1));
+
+    let spikeSum = 0;
+    ["armSpikes","backSpikes","headSpikes","legSpikes","tailSpikes","neckSpikes","chestStrength","legStrength","tailStrength","wingStrength","wingClaws"].forEach(f => {
+        if (genome[f] && typeof genome[f].interpreted !== "undefined") spikeSum += Number(genome[f].interpreted);
+    });
+    const strength = Math.round(spikeSum * 6 + (magicInfo.magicProficiency || 3) * 12);
+
+    const agility = magicInfo.agility || 2;
+
+    return {
+        id: jsonObj.id || 666,
+        name: nameInfo.longName || nameInfo.shortName || "Unnamed Dragon",
+        thumbnail: dr.thumbnail || egg.thumbnail || "https://media.drakaria.com/dk/000001/WATER/666_thumbnail.png",
+        house: house,
+        magicElement: magicElement,
+        class: dragonClass,
+        hp: hp,
+        maxHp: hp,
+        currentHp: hp,
+        strength: strength,
+        agility: agility,
+        coMSpell: `CoM Incantation • ${jsonObj.charmOfMaking ? jsonObj.charmOfMaking.substring(0,18)+"..." : "Virae Shaelor Naeria"}`,
+        keeperSpell: `Keeper's Secret Imprint • Bind the ${magicElement}`,
+        raw: jsonObj
+    };
 }
-function drawWyrm(drg,wp){
-const wf=Math.sin(wp)*0.65;
-// Left wing
-ctx.save();ctx.rotate(-0.18+wf*0.55);ctx.fillStyle=drg.acc;ctx.globalAlpha=0.82;
-ctx.beginPath();ctx.moveTo(0,-8);ctx.quadraticCurveTo(-58,-52+wf*14,-48,-74+wf*18);ctx.quadraticCurveTo(-28,-48,-10,-28+wf*9);ctx.closePath();ctx.fill();
-ctx.restore();
-// Right wing
-ctx.save();ctx.scale(-1,1);ctx.rotate(-0.18+wf*0.55);ctx.fillStyle=drg.acc;ctx.globalAlpha=0.82;
-ctx.beginPath();ctx.moveTo(0,-8);ctx.quadraticCurveTo(-58,-52+wf*14,-48,-74+wf*18);ctx.quadraticCurveTo(-28,-48,-10,-28+wf*9);ctx.closePath();ctx.fill();
-ctx.restore();
-ctx.globalAlpha=1;
-// Body
-ctx.fillStyle=drg.bodyCol;ctx.beginPath();ctx.ellipse(0,0,23,14,0,0,Math.PI*2);ctx.fill();
-// Head
-ctx.fillStyle=drg.col;ctx.beginPath();ctx.ellipse(27,0,14,10,-0.12,0,Math.PI*2);ctx.fill();
-// Snout
-ctx.fillStyle=drg.col;ctx.beginPath();ctx.ellipse(40,-2,9,6,0.1,0,Math.PI*2);ctx.fill();
-// Nostril
-ctx.fillStyle=’#000’;ctx.beginPath();ctx.arc(44,-1,2,0,Math.PI*2);ctx.fill();
-// Eye
-ctx.fillStyle=drg.eyeCol;ctx.beginPath();ctx.arc(33,-3,4.5,0,Math.PI*2);ctx.fill();
-ctx.fillStyle=’#000’;ctx.beginPath();ctx.arc(34,-3,2.5,0,Math.PI*2);ctx.fill();
-ctx.fillStyle=‘rgba(255,255,255,0.5)’;ctx.beginPath();ctx.arc(35.5,-4.5,1.2,0,Math.PI*2);ctx.fill();
-// Spine
-ctx.strokeStyle=drg.acc;ctx.lineWidth=1.8;ctx.globalAlpha=0.6;
-ctx.beginPath();for(let i=0;i<5;i++){ctx.moveTo(-8+i*6,-12);ctx.lineTo(-6+i*6,-20+i*1.5);}ctx.stroke();
-ctx.globalAlpha=1;
-// Tail
-ctx.strokeStyle=drg.bodyCol;ctx.lineWidth=11;ctx.lineCap=‘round’;
-ctx.beginPath();ctx.moveTo(-18,2);ctx.quadraticCurveTo(-42,16,-52+wf*6,5);ctx.stroke();
-ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-52+wf*6,5);ctx.quadraticCurveTo(-64,0,-56,-12);ctx.stroke();
-// Night fury ear fins
-if(drg.id===‘nightfury’){
-ctx.fillStyle=drg.acc;ctx.globalAlpha=0.7;
-ctx.beginPath();ctx.moveTo(24,-10);ctx.lineTo(18,-22);ctx.lineTo(32,-16);ctx.closePath();ctx.fill();
-ctx.beginPath();ctx.moveTo(30,-10);ctx.lineTo(38,-20);ctx.lineTo(36,-14);ctx.closePath();ctx.fill();
-ctx.globalAlpha=1;
+
+// ====================== CLEAN RENDER DRAGON CARD (NO DUPLICATE HP IN BATTLE) ======================
+function renderDragonCard(dragon, isBattle = false) {
+    if (isBattle) {
+        return `
+        <div class="text-center">
+            <img src="${dragon.thumbnail}" class="w-40 h-40 mx-auto rounded-2xl object-cover border-4 border-cyan-400 mb-4" alt="dragon">
+            <div class="text-2xl font-bold">${dragon.name.split(',')[0]}</div>
+            <div class="text-cyan-300 text-sm mb-4">${dragon.house} • ${dragon.magicElement}</div>
+            <div class="inline-flex items-center gap-2 px-6 py-1 bg-black/60 rounded-3xl">
+                <span class="text-${dragon.class.color}-400">${dragon.class.name}</span>
+            </div>
+        </div>`;
+    }
+    return `
+    <div class="text-center">
+        <img src="${dragon.thumbnail}" class="w-40 h-40 mx-auto rounded-2xl object-cover border-4 border-cyan-400 mb-4" alt="dragon">
+        <div class="text-2xl font-bold">${dragon.name.split(',')[0]}</div>
+        <div class="text-cyan-300 text-sm mb-4">${dragon.house} • ${dragon.magicElement}</div>
+        <div class="inline-flex items-center gap-2 px-6 py-1 bg-black/60 rounded-3xl mb-6">
+            <span class="text-${dragon.class.color}-400">${dragon.class.name}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-4 text-center">
+            <div><div class="text-xs text-gray-400">HP</div><div class="text-4xl font-bold text-red-400">${dragon.hp}</div></div>
+            <div><div class="text-xs text-gray-400">STRENGTH</div><div class="text-4xl font-bold text-orange-400">${dragon.strength}</div></div>
+            <div><div class="text-xs text-gray-400">AGILITY</div><div class="text-4xl font-bold text-cyan-400">${dragon.agility.toFixed(1)}</div></div>
+        </div>
+    </div>`;
 }
+
+// ====================== UPLOAD & DEMO ======================
+function handleUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            const json = JSON.parse(ev.target.result);
+            currentDragon = parseDragonJSON(json);
+            finishUpload();
+        } catch(err) {
+            alert("Could not read the file. Make sure it is a valid JSON from drakaria.com Raw Data.");
+        }
+    };
+    reader.readAsText(file);
 }
-function drawSerpent(drg,wp){
-const wf=Math.sin(wp); const segs=7;
-// Glow for rainbow
-if(drg.rainbow){
-ctx.save();ctx.shadowBlur=18;
-for(let i=0;i<segs;i++){
-ctx.shadowColor=`hsl(${(hue+i*40)%360},100%,65%)`;
-ctx.strokeStyle=`hsl(${(hue+i*40)%360},100%,70%)`;
-ctx.lineWidth=16;ctx.lineCap=‘round’;ctx.globalAlpha=0.85;
-const px=-i*18;const py=Math.sin(wp-i*0.75)*12;
-ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-18,Math.sin(wp-(i+1)*0.75)*12);ctx.stroke();
+
+function parsePastedJSON() {
+    const text = document.getElementById('jsonPasteArea').value.trim();
+    if (!text) return alert("Paste the full JSON first");
+    try {
+        const json = JSON.parse(text);
+        currentDragon = parseDragonJSON(json);
+        finishUpload();
+    } catch(err) {
+        alert("Invalid JSON — copy the exact raw data from drakaria.com");
+    }
 }
-ctx.restore();
-} else {
-// Body
-ctx.lineWidth=16;ctx.lineCap=‘round’;ctx.strokeStyle=drg.bodyCol;ctx.globalAlpha=1;
-for(let i=0;i<segs;i++){
-const px=-i*18;const py=Math.sin(wp-i*0.75)*12;
-ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-18,Math.sin(wp-(i+1)*0.75)*12);ctx.stroke();
+
+function finishUpload() {
+    document.getElementById('uploadStatus').classList.remove('hidden');
+    document.getElementById('statusText').innerHTML = `✅ Parsed <span class="font-bold">${currentDragon.name}</span> • ${currentDragon.class.name}`;
+    setTimeout(() => navigate(2), 600);
 }
-// Accent
-ctx.strokeStyle=drg.acc;ctx.lineWidth=5;ctx.globalAlpha=0.55;
-for(let i=0;i<segs;i++){
-const px=-i*18;const py=Math.sin(wp-i*0.75)*12;
-ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-18,Math.sin(wp-(i+1)*0.75)*12);ctx.stroke();
+
+function loadDemo() {
+    currentDragon = parseDragonJSON(demoDragon);
+    document.getElementById('uploadStatus').classList.remove('hidden');
+    document.getElementById('statusText').innerHTML = `✅ LOADED DEMO #666 • Legendary Titan`;
+    setTimeout(() => navigate(2), 600);
 }
-ctx.globalAlpha=1;
+
+// ====================== DECK BUILDER ======================
+function autoFillDeck() {
+    selectedTrainers = [];
+    const compatible = trainerLibrary.filter(t => {
+        const elementOk = t.element === "ANY" || t.element === currentDragon.house || t.element === currentDragon.magicElement;
+        const classOk = !t.classReq || t.classReq === currentDragon.class.name;
+        return elementOk && classOk;
+    });
+    while (selectedTrainers.length < 19 && compatible.length > 0) {
+        const random = compatible[Math.floor(Math.random() * compatible.length)];
+        if (selectedTrainers.filter(t => t.id === random.id).length < 2) selectedTrainers.push(random);
+    }
+    renderDeckBuilder();
 }
-// Scale pattern
-ctx.strokeStyle=lc(drg.bodyCol,20);ctx.lineWidth=1.5;ctx.globalAlpha=0.4;
-for(let i=0;i<segs;i++){
-const px=-i*18-9;const py=Math.sin(wp-i*0.75)*12;
-ctx.beginPath();ctx.arc(px,py,7,0,Math.PI);ctx.stroke();
+
+function renderDeckBuilder() {
+    if (!currentDragon) return;
+    document.getElementById('dragonCardDisplay').innerHTML = renderDragonCard(currentDragon);
+
+    let selectedHTML = '';
+    selectedTrainers.forEach((t,i) => {
+        selectedHTML += `<div onclick="removeTrainer(${i})" class="bg-black/60 border border-purple-400 rounded-2xl p-3 text-center text-xs cursor-pointer flex items-center gap-2">
+            <span class="text-2xl">${t.icon}</span> ${t.name} <span class="ml-auto text-cyan-400">(${t.cost})</span>
+        </div>`;
+    });
+    document.getElementById('selectedDeck').innerHTML = selectedHTML || `<div class="col-span-6 text-center text-gray-400 py-8">Your 19 trainers will appear here<br><button onclick="autoFillDeck()" class="mt-4 px-6 py-2 bg-cyan-400 text-black text-sm font-bold rounded-2xl">AUTO-FILL 19 TRAINERS</button></div>`;
+
+    let gridHTML = '';
+    trainerLibrary.forEach(t => {
+        const elementOk = t.element === "ANY" || t.element === currentDragon.house || t.element === currentDragon.magicElement;
+        const classOk = !t.classReq || t.classReq === currentDragon.class.name;
+        const compatible = elementOk && classOk;
+        const selectedCount = selectedTrainers.filter(s => s.id === t.id).length;
+        gridHTML += `
+        <div onclick="${compatible ? `toggleTrainer(${t.id})` : ''}" class="card ${compatible ? '' : 'opacity-40 pointer-events-none'} bg-black/70 border border-purple-400/30 hover:border-cyan-400 rounded-2xl p-4 cursor-pointer text-center">
+            <div class="text-4xl mb-2">${t.icon}</div>
+            <div class="font-bold text-sm">${t.name}</div>
+            <div class="text-xs text-cyan-400 mt-1">Cost: ${t.cost} Energy</div>
+            <div class="text-xs text-gray-400 mt-1">${t.desc}</div>
+            ${!compatible ? `<div class="text-[10px] text-red-400 mt-2">LOCKED</div>` : ''}
+            <div class="mt-3 text-[10px] ${selectedCount ? 'text-cyan-400' : 'text-purple-300'}">${selectedCount ? '✓' : 'Tap to add'}</div>
+        </div>`;
+    });
+    document.getElementById('trainerGrid').innerHTML = gridHTML;
+    document.getElementById('selectedCount').innerHTML = `${selectedTrainers.length}/19`;
 }
-ctx.globalAlpha=1;
-// Head
-const hy=wf*6;
-ctx.fillStyle=drg.col;ctx.beginPath();ctx.ellipse(14,hy,17,11,wf*0.18,0,Math.PI*2);ctx.fill();
-ctx.fillStyle=drg.eyeCol;ctx.beginPath();ctx.arc(20,hy-2,4.5,0,Math.PI*2);ctx.fill();
-ctx.fillStyle=’#000’;ctx.beginPath();ctx.arc(21,hy-2,2.5,0,Math.PI*2);ctx.fill();
-ctx.fillStyle=‘rgba(255,255,255,0.5)’;ctx.beginPath();ctx.arc(22,hy-3.5,1.2,0,Math.PI*2);ctx.fill();
-// Forked tongue
-ctx.strokeStyle=’#ff2244’;ctx.lineWidth=1.8;
-ctx.beginPath();ctx.moveTo(30,hy+1);ctx.lineTo(38,hy+1);ctx.moveTo(38,hy+1);ctx.lineTo(42,hy-2);ctx.moveTo(38,hy+1);ctx.lineTo(42,hy+3);ctx.stroke();
-// Horns / frills
-if(drg.rainbow){
-const colors=[’#ff4444’,’#ff8800’,’#ffff00’,’#00ff88’,’#0088ff’,’#ff44ff’];
-colors.forEach((c,i)=>{
-ctx.strokeStyle=c;ctx.lineWidth=2.5;ctx.shadowColor=c;ctx.shadowBlur=8;
-ctx.beginPath();ctx.moveTo(10,hy-11);ctx.lineTo(6+i*3-8,hy-20-i*3);ctx.stroke();
+
+function toggleTrainer(id) {
+    const trainer = trainerLibrary.find(t => t.id === id);
+    const existing = selectedTrainers.filter(t => t.id === id).length;
+    if (existing < 2 && selectedTrainers.length < 19) selectedTrainers.push(trainer);
+    else if (existing > 0) selectedTrainers = selectedTrainers.filter(t => t.id !== id);
+    renderDeckBuilder();
+}
+
+function removeTrainer(index) {
+    selectedTrainers.splice(index, 1);
+    renderDeckBuilder();
+}
+
+// ====================== BATTLE ======================
+function enterBattle() {
+    if (!currentDragon) return alert("Upload a dragon first!");
+    if (selectedTrainers.length < 19) {
+        if (!confirm("You have only " + selectedTrainers.length + "/19 trainers.\n\nClick OK to auto-fill the rest.")) return;
+        autoFillDeck();
+    }
+    navigate(3);
+    initBattle();
+}
+
+function initBattle() {
+    playerEnergy = 0;
+    energyAttachedThisTurn = false;
+    comUsedThisTurn = false;
+    playerCurrentHP = currentDragon.maxHp;
+
+    const bossJSON = bossJSONs[currentBossIndex];
+    const aiDragon = parseDragonJSON(bossJSON);
+
+    aiSelectedTrainers = [];
+    const compatibleForAI = trainerLibrary.filter(t => {
+        const elementOk = t.element === "ANY" || t.element === aiDragon.house || t.element === aiDragon.magicElement;
+        const classOk = !t.classReq || t.classReq === aiDragon.class.name;
+        return elementOk && classOk;
+    });
+    while (aiSelectedTrainers.length < 19 && compatibleForAI.length > 0) {
+        const random = compatibleForAI[Math.floor(Math.random() * compatibleForAI.length)];
+        if (aiSelectedTrainers.filter(t => t.id === random.id).length < 2) aiSelectedTrainers.push(random);
+    }
+
+    aiEnergy = 0;
+    aiEnergyAttachedThisTurn = false;
+    aiCurrentHP = 480;
+    aiResurrected = false;
+
+    trainerHand = [...selectedTrainers].sort(() => Math.random() - 0.5).slice(0, 8);
+    aiHand = [...aiSelectedTrainers].sort(() => Math.random() - 0.5).slice(0, 8);
+
+    battleLogEl = document.getElementById('battleLog');
+    battleLogEl.innerHTML = `<div class="text-center text-purple-300">BATTLE BEGINS — ${currentDragon.name} vs ${aiDragon.name} (Stage ${currentBossIndex + 1}/4)</div>`;
+
+    document.getElementById('playerInfo').innerHTML = `<div class="text-sm">${currentDragon.name.split(',')[0]}</div><img src="${currentDragon.thumbnail}" class="w-12 h-12 rounded-2xl border border-cyan-400">`;
+    document.getElementById('playerDragonBattle').innerHTML = renderDragonCard(currentDragon, true);
+    document.getElementById('playerHPText').innerHTML = `${playerCurrentHP} / ${currentDragon.maxHp}`;
+    document.getElementById('playerHPBar').style.width = '100%';
+
+    document.getElementById('aiInfo').innerHTML = `<img src="${aiDragon.thumbnail}" class="w-12 h-12 rounded-2xl border border-red-400"><div class="text-sm">${aiDragon.name}</div>`;
+    document.getElementById('aiDragonBattle').innerHTML = `<div class="text-center"><img src="${aiDragon.thumbnail}" class="w-40 h-40 mx-auto rounded-2xl border-4 border-red-400 mb-4"><div class="text-xl font-bold">${aiDragon.name}</div></div>`;
+    document.getElementById('aiHPText').innerHTML = `${aiCurrentHP} / 480`;
+    document.getElementById('aiHPBar').style.width = '100%';
+
+    renderPlayerActions();
+    renderTrainerHand();
+    updateEnergyDisplay();
+    updateAIEnergyDisplay();
+    updatePointsDisplay();
+    showAnnouncement("THE BATTLE BEGINS", `Stage ${currentBossIndex + 1}/4 — ${aiDragon.name}`);
+}
+
+function updatePointsDisplay() {
+    document.getElementById('playerPoints').textContent = playerPoints;
+    document.getElementById('aiPoints').textContent = aiPoints;
+}
+
+function updateEnergyDisplay() {
+    document.getElementById('playerEnergyText').innerHTML = `${playerEnergy} / 6`;
+    document.getElementById('playerEnergyBar').style.width = `${(playerEnergy / 6) * 100}%`;
+}
+
+function updateAIEnergyDisplay() {
+    document.getElementById('aiEnergyBar').style.width = `${(aiEnergy / 6) * 100}%`;
+}
+
+function renderPlayerActions() {
+    const container = document.getElementById('playerActions');
+    const energyBtnDisabled = energyAttachedThisTurn ? 'opacity-50 cursor-not-allowed' : '';
+    const comBtnDisabled = comUsedThisTurn ? 'opacity-50 cursor-not-allowed' : '';
+    container.innerHTML = `
+        <button onclick="doAction('energy')" class="bg-cyan-900 hover:bg-cyan-700 text-white py-6 rounded-3xl text-sm font-bold ${energyBtnDisabled}">ATTACH ENERGY (+1)</button>
+        <button onclick="doAction('com')" class="bg-purple-900 hover:bg-purple-700 text-white py-6 rounded-3xl text-sm font-bold ${comBtnDisabled}">CAST CoM (FREE 20 DMG)</button>
+        <button onclick="doAction('keeper')" class="bg-violet-900 hover:bg-violet-700 text-white py-6 rounded-3xl text-sm font-bold">CAST KEEPER SPELL (3)</button>
+    `;
+}
+
+function renderTrainerHand() {
+    let html = '';
+    trainerHand.forEach((t, i) => {
+        const effectLabel = getEffectLabel(t.effect);
+        html += `<div onclick="playTrainer(${i})" class="card bg-black/80 border border-purple-400 rounded-2xl p-3 text-center cursor-pointer text-xs flex flex-col items-center relative">
+            <div class="text-3xl mb-1">${t.icon}</div>
+            <div class="font-bold">${t.name}</div>
+            <div class="text-[10px] px-3 py-0.5 rounded-full bg-black/60 mt-1 mb-2">${effectLabel}</div>
+            <div class="text-cyan-400 text-[10px]">Cost: ${t.cost} Energy</div>
+            <div class="text-xs text-gray-400 mt-1">${t.desc}</div>
+        </div>`;
+    });
+    document.getElementById('trainerHand').innerHTML = html || '<div class="col-span-5 text-center text-gray-400 py-8">No trainers left in hand</div>';
+}
+
+function getEffectLabel(effect) {
+    const map = { damage: "💥 DAMAGE", heal: "❤️ HEAL", boost: "🔥 BOOST", energy: "⚡ ENERGY", trap: "🪤 TRAP", disrupt: "⚡ DISRUPT", lifesteal: "🩸 LIFESTEAL", reflect: "🔄 REFLECT", shield: "🛡️ SHIELD", burn: "🔥 BURN", crit: "⚡ CRIT", steal: "🌬️ STEAL", coil: "🌳 COIL" };
+    return map[effect] || effect.toUpperCase();
+}
+
+function createFloatingNumber(containerId, amount, isDamage) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const num = document.createElement('div');
+    num.className = `floating-number text-4xl ${isDamage ? 'text-red-400' : 'text-green-400'}`;
+    num.textContent = isDamage ? `-${amount}` : `+${amount}`;
+    num.style.left = Math.random() * 60 + 20 + '%';
+    container.appendChild(num);
+    setTimeout(() => num.remove(), 1300);
+}
+
+function playTrainer(index) {
+    const trainer = trainerHand[index];
+    if (playerEnergy < trainer.cost) return showAnnouncement("NOT ENOUGH ENERGY", `This card costs ${trainer.cost} Energy`);
+    playerEnergy -= trainer.cost;
+    trainerHand.splice(index, 1);
+    renderTrainerHand();
+    updateEnergyDisplay();
+
+    const playedCard = document.querySelector('#trainerHand > div:last-child');
+    if (playedCard) playedCard.classList.add('card-play');
+
+    showAnnouncement(trainer.name.toUpperCase() + " PLAYED", `${getEffectLabel(trainer.effect)} — ${trainer.desc}`);
+    addLog(`You played ${trainer.name} — ${getEffectLabel(trainer.effect)}`);
+
+    if (trainer.effect === "damage" || trainer.effect === "boost" || trainer.effect === "trap") {
+        aiCurrentHP = Math.max(0, aiCurrentHP - 35);
+        createFloatingNumber('aiHPContainer', 35, true);
+        document.getElementById('aiDragonBattle').classList.add('shake');
+        setTimeout(() => document.getElementById('aiDragonBattle').classList.remove('shake'), 500);
+    }
+    if (trainer.effect === "heal") {
+        playerCurrentHP = Math.min(playerCurrentHP + 40, currentDragon.maxHp);
+        createFloatingNumber('playerHPContainer', 40, false);
+        document.getElementById('playerDragonBattle').classList.add('heal-glow');
+        setTimeout(() => document.getElementById('playerDragonBattle').classList.remove('heal-glow'), 600);
+    }
+    if (trainer.effect === "lifesteal") {
+        playerCurrentHP = Math.min(playerCurrentHP + 20, currentDragon.maxHp);
+        aiCurrentHP = Math.max(0, aiCurrentHP - 35);
+        createFloatingNumber('playerHPContainer', 20, false);
+        createFloatingNumber('aiHPContainer', 35, true);
+    }
+    if (trainer.effect === "energy") playerEnergy = Math.min(playerEnergy + 2, 6);
+    if (trainer.effect === "disrupt") playerEnergy = Math.max(0, playerEnergy - 1);
+    if (trainer.effect === "reflect") aiCurrentHP = Math.max(0, aiCurrentHP - 30);
+    if (trainer.effect === "steal") aiEnergy = Math.max(0, aiEnergy - 1);
+
+    updateAIHP();
+    document.getElementById('playerDragonBattle').innerHTML = renderDragonCard(currentDragon, true);
+    checkPlayerDefeat();
+    handleAIDefeated();
+}
+
+function doAction(type) {
+    if (type === 'energy') {
+        if (energyAttachedThisTurn) return showAnnouncement("ALREADY ATTACHED", "Only 1 base Energy per turn allowed");
+        playerEnergy = Math.min(playerEnergy + 1, 6);
+        energyAttachedThisTurn = true;
+        updateEnergyDisplay();
+        showAnnouncement("ENERGY ATTACHED", currentDragon.magicElement + " flows into your dragon");
+        addLog(`You attached 1 ${currentDragon.magicElement} Energy`);
+        renderPlayerActions();
+        return;
+    }
+    if (type === 'com') {
+        if (comUsedThisTurn) return showAnnouncement("ALREADY USED", "CoM can only be used once per turn");
+        aiCurrentHP = Math.max(0, aiCurrentHP - 20);
+        comUsedThisTurn = true;
+        updateAIHP();
+        createFloatingNumber('aiHPContainer', 20, true);
+        document.getElementById('aiDragonBattle').classList.add('shake');
+        setTimeout(() => document.getElementById('aiDragonBattle').classList.remove('shake'), 500);
+        showAnnouncement("CoM BASIC ATTACK", "20 damage (free)");
+        addLog(`CoM basic attack hits for 20 damage!`);
+        handleAIDefeated();
+        renderPlayerActions();
+        return;
+    }
+    if (type === 'keeper') {
+        if (playerEnergy < 3) return showAnnouncement("NOT ENOUGH ENERGY", "Keeper costs 3 Energy");
+        playerEnergy -= 3;
+        updateEnergyDisplay();
+        const dmg = Math.round(80 * (currentDragon.strength / 100)) + (currentDragon.class.name === "Legendary Titan" ? 40 : 0);
+        aiCurrentHP = Math.max(0, aiCurrentHP - dmg);
+        createFloatingNumber('aiHPContainer', dmg, true);
+        document.getElementById('aiDragonBattle').classList.add('shake');
+        setTimeout(() => document.getElementById('aiDragonBattle').classList.remove('shake'), 500);
+        updateAIHP();
+        showAnnouncement("KEEPER SPELL UNLEASHED", currentDragon.keeperSpell);
+        addLog(`Keeper spell hits for ${dmg} damage!`);
+        handleAIDefeated();
+        return;
+    }
+}
+
+function updateAIHP() {
+    const percent = Math.max(0, Math.round((aiCurrentHP / 480) * 100));
+    document.getElementById('aiHPBar').style.width = percent + '%';
+    document.getElementById('aiHPText').innerHTML = `${aiCurrentHP} / 480`;
+}
+
+function handleAIDefeated() {
+    if (aiCurrentHP <= 0) {
+        if (!aiResurrected) {
+            aiResurrected = true;
+            aiCurrentHP = 480;
+            updateAIHP();
+            showAnnouncement("RESURRECTION!", "The boss revives with full health!");
+            addLog("AI boss resurrected with full HP!");
+        } else {
+            playerPoints++;
+            updatePointsDisplay();
+            showAnnouncement("YOU WON", `<span class="text-7xl">VICIMVS VINCEMVSQVE!</span>`);
+            addLog("VICTORY! Stage complete.");
+            setTimeout(() => {
+                currentBossIndex = (currentBossIndex + 1) % bossJSONs.length;
+                initBattle();
+            }, 2500);
+            return;
+        }
+    }
+}
+
+function checkPlayerDefeat() {
+    if (playerCurrentHP <= 0) {
+        showAnnouncement("DEFEATED", `<span class="text-7xl text-red-400">THE REALM FALLS</span>`);
+        addLog("Your dragon has fallen...");
+        setTimeout(() => {
+            currentBossIndex = 0;
+            playerPoints = 0;
+            navigate(1);
+        }, 3000);
+    }
+}
+
+function aiTurn() {
+    if (!aiEnergyAttachedThisTurn) {
+        aiEnergy = Math.min(aiEnergy + 1, 6);
+        aiEnergyAttachedThisTurn = true;
+    }
+    updateAIEnergyDisplay();
+
+    let actionTaken = false;
+
+    const lowHP = aiCurrentHP < 200;
+    const priority = lowHP ? ['heal', 'lifesteal', 'energy', 'damage', 'boost', 'trap', 'reflect', 'steal', 'disrupt'] 
+                           : ['damage', 'boost', 'trap', 'lifesteal', 'reflect', 'steal', 'disrupt', 'heal', 'energy'];
+
+    if (aiHand.length > 0) {
+        let chosen = null;
+        for (let type of priority) {
+            chosen = aiHand.find(t => t.effect === type && aiEnergy >= t.cost);
+            if (chosen) break;
+        }
+        if (!chosen) chosen = aiHand.find(t => aiEnergy >= t.cost);
+
+        if (chosen) {
+            aiEnergy -= chosen.cost;
+            aiHand.splice(aiHand.indexOf(chosen), 1);
+
+            addLog(`AI played ${chosen.name} (${chosen.cost} Energy) — ${chosen.desc}`);
+
+            if (chosen.effect === "damage") playerCurrentHP = Math.max(0, playerCurrentHP - (32 + Math.floor(Math.random()*18)));
+            if (chosen.effect === "boost") playerCurrentHP = Math.max(0, playerCurrentHP - (28 + Math.floor(Math.random()*12)));
+            if (chosen.effect === "trap") playerCurrentHP = Math.max(0, playerCurrentHP - (22 + Math.floor(Math.random()*13)));
+            if (chosen.effect === "lifesteal") { playerCurrentHP = Math.max(0, playerCurrentHP - 35); aiCurrentHP = Math.min(aiCurrentHP + 25, 480); }
+            if (chosen.effect === "reflect") playerCurrentHP = Math.max(0, playerCurrentHP - 30);
+            if (chosen.effect === "steal") playerEnergy = Math.max(0, playerEnergy - 1);
+            if (chosen.effect === "disrupt") playerEnergy = Math.max(0, playerEnergy - 2);
+            if (chosen.effect === "heal") aiCurrentHP = Math.min(aiCurrentHP + 45, 480);
+            if (chosen.effect === "energy") aiEnergy = Math.min(aiEnergy + 2, 6);
+
+            createFloatingNumber('playerHPContainer', 35, true);
+            document.getElementById('playerDragonBattle').classList.add('shake');
+            setTimeout(() => document.getElementById('playerDragonBattle').classList.remove('shake'), 500);
+
+            actionTaken = true;
+        }
+    }
+
+    if (!actionTaken) {
+        const basicDmg = 26 + Math.floor(Math.random() * 14);
+        playerCurrentHP = Math.max(0, playerCurrentHP - basicDmg);
+        addLog(`AI basic attack — ${basicDmg} damage to you`);
+        createFloatingNumber('playerHPContainer', basicDmg, true);
+        document.getElementById('playerDragonBattle').classList.add('shake');
+        setTimeout(() => document.getElementById('playerDragonBattle').classList.remove('shake'), 500);
+    }
+
+    document.getElementById('playerDragonBattle').innerHTML = renderDragonCard(currentDragon, true);
+    document.getElementById('playerHPText').innerHTML = `${playerCurrentHP} / ${currentDragon.maxHp}`;
+    document.getElementById('playerHPBar').style.width = Math.max(0, Math.round((playerCurrentHP / currentDragon.maxHp) * 100)) + '%';
+
+    checkPlayerDefeat();
+    handleAIDefeated();
+
+    energyAttachedThisTurn = false;
+    comUsedThisTurn = false;
+    renderPlayerActions();
+    aiEnergyAttachedThisTurn = false;
+}
+
+function addLog(msg) {
+    const div = document.createElement('div');
+    div.textContent = `> ${msg}`;
+    battleLogEl.appendChild(div);
+    battleLogEl.scrollTop = battleLogEl.scrollHeight;
+}
+
+function showAnnouncement(title, sub) {
+    const ann = document.getElementById('announcement');
+    document.getElementById('announceText').innerHTML = title;
+    document.getElementById('announceSub').innerHTML = sub;
+    ann.style.display = 'flex';
+    setTimeout(() => { ann.style.display = 'none'; }, 2800);
+}
+
+function navigate(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    const target = document.getElementById('screen-' + n);
+    if (target) target.classList.remove('hidden');
+    if (n === 2 && currentDragon) renderDeckBuilder();
+}
+
+function showDragonModal() {
+    const modal = document.getElementById('dragonModal');
+    document.getElementById('modalContent').innerHTML = `
+        <h2 class="text-3xl mb-6">FULL RAW GENETICS</h2>
+        <pre class="bg-black/70 p-6 rounded-3xl text-xs overflow-auto max-h-96 font-mono">${JSON.stringify(currentDragon.raw || currentDragon, null, 2)}</pre>
+        <button onclick="hideModal()" class="mt-6 px-10 py-4 border border-cyan-400 rounded-3xl">CLOSE</button>`;
+    modal.style.display = 'flex';
+}
+
+function hideModal() { document.getElementById('dragonModal').style.display = 'none'; }
+
+function showHowToPlay() { document.getElementById('howToModal').style.display = 'flex'; }
+function hideHowToPlay() { document.getElementById('howToModal').style.display = 'none'; }
+function showEffectsLegend() { document.getElementById('legendModal').style.display = 'flex'; }
+function hideLegend() { document.getElementById('legendModal').style.display = 'none'; }
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('%c✅ Drakaria TCG — Double HP bar FIXED + Upload/Demo/Deck fully working + Player death works', 'color:#00ffcc; font-family:monospace; font-size:18px');
 });
-ctx.shadowBlur=0;
-} else {
-ctx.strokeStyle=drg.acc;ctx.lineWidth=3;
-ctx.beginPath();ctx.moveTo(10,hy-11);ctx.lineTo(4,hy-22);ctx.stroke();
-ctx.beginPath();ctx.moveTo(18,hy-11);ctx.lineTo(25,hy-20);ctx.stroke();
-// Fin behind head
-ctx.fillStyle=drg.acc;ctx.globalAlpha=0.6;
-ctx.beginPath();ctx.moveTo(-2,hy-9);ctx.quadraticCurveTo(-8,hy-24,-18,hy-14);ctx.quadraticCurveTo(-12,hy-8,-2,hy-9);ctx.fill();
-ctx.globalAlpha=1;
-}
-if(drg.id===‘lung’){
-// Whiskers
-ctx.strokeStyle=’#ffcc44’;ctx.lineWidth=1.5;ctx.globalAlpha=0.8;
-ctx.beginPath();ctx.moveTo(28,hy+2);ctx.lineTo(38+wf*4,hy-4);ctx.stroke();
-ctx.beginPath();ctx.moveTo(28,hy+4);ctx.lineTo(38+wf*4,hy+9);ctx.stroke();
-// Pearl glow
-ctx.save();ctx.shadowColor=’#80ffff’;ctx.shadowBlur=12;
-ctx.fillStyle=’#c8ffff’;ctx.beginPath();ctx.arc(22,hy+8,5,0,Math.PI*2);ctx.fill();
-ctx.restore();
-ctx.globalAlpha=1;
-}
-}
-
-// ================================================================
-//  PARALLAX CITY BACKGROUNDS
-// ================================================================
-function drawCityBg(cityId,scrollX,ph){
-const city=CITIES.find(c=>c.id===cityId)||CITIES[0];
-const g=ctx.createLinearGradient(0,0,0,H);
-g.addColorStop(0,city.sky1);g.addColorStop(0.55,city.sky2);g.addColorStop(1,city.sky3);
-ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-drawStars(0.3,ph);
-// Far clouds
-ctx.save();ctx.globalAlpha=0.16;
-for(let i=0;i<9;i++){
-const cx2=((i*215+scrollX*0.07)%(W+320))-110;const cy2=H*0.18+Math.sin(i*1.4)*H*0.1;
-ctx.fillStyle=’#ccd’;
-ctx.beginPath();ctx.ellipse(cx2,cy2,85+i*11,26+i*5,0,0,Math.PI*2);ctx.fill();
-ctx.beginPath();ctx.ellipse(cx2+45,cy2-11,65,21,0,0,Math.PI*2);ctx.fill();
-ctx.beginPath();ctx.ellipse(cx2-35,cy2-8,58,19,0,0,Math.PI*2);ctx.fill();
-}
-ctx.restore();
-// Mid city-tinted clouds
-ctx.save();ctx.globalAlpha=0.22;
-for(let i=0;i<7;i++){
-const cx2=((i*275+scrollX*0.2)%(W+420))-160;const cy2=H*0.32+Math.sin(i*2.2+ph)*H*0.055;
-ctx.fillStyle=city.acc;
-ctx.beginPath();ctx.ellipse(cx2,cy2,68+i*9,19+i*4,0,0,Math.PI*2);ctx.fill();
-ctx.beginPath();ctx.ellipse(cx2+38,cy2-9,52,17,0,0,Math.PI*2);ctx.fill();
-}
-ctx.restore();
-drawCityDecorations(cityId,scrollX,ph,city);
-}
-
-function drawCityDecorations(id,sx,ph,city){
-ctx.save();
-switch(id){
-case ‘berkhaven’:{
-// Stormy lightning bolts
-ctx.globalAlpha=0.14+0.08*Math.abs(Math.sin(ph*2.8));
-ctx.strokeStyle=’#aabbff’;ctx.lineWidth=2.5;
-for(let i=0;i<5;i++){
-const lx=((i*280+sx*0.25)%(W+220))-60;
-ctx.beginPath();ctx.moveTo(lx,H*0.05);
-let ly=H*0.05;
-for(let j=0;j<9;j++){ly+=H*0.09;ctx.lineTo(lx+(Math.random()-0.5)*22,ly);}
-ctx.stroke();
-}
-// Viking longhouses
-ctx.globalAlpha=0.38;
-for(let i=0;i<5;i++){
-const bx=((i*230+sx*0.55)%(W+300))-90;const by=H*0.72;
-ctx.fillStyle=’#1e0e06’;ctx.fillRect(bx-55,by,110,H*0.32);
-ctx.fillStyle=’#7a3318’;
-ctx.beginPath();ctx.moveTo(bx-62,by+4);ctx.lineTo(bx+62,by+4);ctx.lineTo(bx+48,by-30);ctx.lineTo(bx-48,by-30);ctx.closePath();ctx.fill();
-ctx.strokeStyle=’#aa5522’;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(bx-64,by+4);ctx.lineTo(bx+64,by+4);ctx.stroke();
-}
-break;
-}
-case ‘lungshan’:{
-// Floating mountains with mist
-ctx.globalAlpha=0.42;
-for(let i=0;i<5;i++){
-const mx=((i*290+sx*0.32)%(W+400))-110;const my=H*0.45+Math.sin(i*1.5+ph*0.4)*22;
-ctx.fillStyle=’#112211’;
-ctx.beginPath();ctx.moveTo(mx-90,my+90);ctx.lineTo(mx,my-45);ctx.lineTo(mx+90,my+90);ctx.closePath();ctx.fill();
-ctx.fillStyle=’#1a3a1a’;
-ctx.beginPath();ctx.moveTo(mx-65,my+90);ctx.lineTo(mx,my-30);ctx.lineTo(mx+65,my+90);ctx.closePath();ctx.fill();
-// Snow/mist cap
-ctx.fillStyle=‘rgba(200,240,220,0.35)’;ctx.beginPath();ctx.ellipse(mx,my-38,28,12,0,0,Math.PI*2);ctx.fill();
-// Floating cloud at base
-ctx.fillStyle=‘rgba(255,255,255,0.18)’;ctx.beginPath();ctx.ellipse(mx,my+92,98,18,0,0,Math.PI*2);ctx.fill();
-}
-break;
-}
-case ‘aidoveil’:{
-// Baobab trees
-ctx.globalAlpha=0.42;
-for(let i=0;i<5;i++){
-const bx=((i*235+sx*0.44)%(W+300))-80;const by=H*0.58+Math.sin(i*1.8+ph*0.3)*14;
-ctx.fillStyle=’#4a1e04’;ctx.fillRect(bx-9,by-65,18,85);
-// Squat canopy
-ctx.fillStyle=’#2e1202’;ctx.beginPath();ctx.ellipse(bx,by-72,55,32,0,0,Math.PI*2);ctx.fill();
-ctx.fillStyle=’#1a0a00’;ctx.beginPath();ctx.ellipse(bx+22,by-68,38,24,0,0,Math.PI*2);ctx.fill();
-}
-// Rainbow waterfalls
-ctx.globalAlpha=0.28;
-[’#ff4444’,’#ff8800’,’#ffff00’,’#44ff44’,’#0088ff’,’#8800ff’].forEach((c,ci)=>{
-for(let i=0;i<4;i++){
-const wx=((i*370+sx*0.52)%(W+320))-80;
-ctx.fillStyle=c;ctx.fillRect(wx+ci*9-27,H*0.28,8,H*0.48);
-}
-});
-// Rainbow arc at horizon
-ctx.globalAlpha=0.18;
-[’#ff4444’,’#ff8800’,’#ffff00’,’#44ff44’,’#0088ff’,’#8800ff’].forEach((c,ci)=>{
-ctx.strokeStyle=c;ctx.lineWidth=8-ci;
-ctx.beginPath();ctx.arc(W/2+(sx*0.1%200)-100,H*1.2,H*(0.9+ci*0.04),Math.PI*0.9,Math.PI*0.1,true);ctx.stroke();
-});
-break;
-}
-case ‘tarasknot’:{
-// Stone circles
-ctx.globalAlpha=0.38;
-for(let i=0;i<4;i++){
-const scx=((i*340+sx*0.38)%(W+320))-90;const scy=H*0.7;
-ctx.strokeStyle=’#3a6a2a’;ctx.lineWidth=2;ctx.beginPath();ctx.arc(scx,scy,58,0,Math.PI*2);ctx.stroke();
-for(let j=0;j<8;j++){
-const a=j/8*Math.PI*2;
-ctx.fillStyle=’#2a4a1a’;ctx.beginPath();ctx.ellipse(scx+Math.cos(a)*58,scy+Math.sin(a)*58,7,16,a,0,Math.PI*2);ctx.fill();
-}
-// Round tower
-ctx.fillStyle=’#1a3010’;ctx.fillRect(scx+70,scy-80,22,85);
-ctx.fillStyle=’#0e2008’;ctx.beginPath();ctx.moveTo(scx+70,scy-80);ctx.lineTo(scx+81,scy-104);ctx.lineTo(scx+92,scy-80);ctx.closePath();ctx.fill();
-}
-break;
-}
-case ‘teotihuacan’:{
-// Stepped pyramids
-ctx.globalAlpha=0.48;
-for(let i=0;i<3;i++){
-const px=((i*310+sx*0.48)%(W+400))-100;const pb=H*0.82;
-for(let s=0;s<6;s++){
-const pw=(6-s)*70;const psh=H*0.055;const psy=pb-psh*(s+1);
-ctx.fillStyle=`hsl(${28+s*4},${48+s*4}%,${20+s*4}%)`;
-ctx.fillRect(px-pw/2,psy,pw,psh+2);
-}
-// Temple at top
-ctx.fillStyle=’#aa5522’;ctx.fillRect(px-14,pb-H*0.055*6-22,28,22);
-}
-break;
-}
-case ‘ishtar’:{
-// Ziggurats + golden glow
-ctx.globalAlpha=0.45;
-for(let i=0;i<3;i++){
-const zx=((i*350+sx*0.46)%(W+420))-100;const zb=H*0.84;
-for(let s=0;s<5;s++){
-const zw=(5-s)*80;const zsh=38;const zsy=zb-zsh*(s+1);
-ctx.fillStyle=`hsl(32,${42+s*5}%,${15+s*5}%)`;
-ctx.fillRect(zx-zw/2,zsy,zw,zsh+2);
-}
-// Glowing gate
-ctx.save();ctx.globalAlpha=0.25+0.1*Math.sin(ph);ctx.fillStyle=’#ffaa00’;
-ctx.fillRect(zx-15,zb-zsh*5-50,30,50);ctx.restore();
-}
-break;
-}
-case ‘wawel’:{
-// Castle
-ctx.globalAlpha=0.42;
-for(let i=0;i<3;i++){
-const wx=((i*310+sx*0.5)%(W+380))-90;const wy=H*0.58;
-ctx.fillStyle=’#1a1830’;ctx.fillRect(wx-55,wy,110,H*0.4);
-// Towers
-ctx.fillStyle=’#222040’;ctx.fillRect(wx-65,wy-30,28,H*0.42);ctx.fillRect(wx+37,wy-30,28,H*0.42);
-// Battlements
-for(let b=0;b<5;b++){ctx.fillRect(wx-52+b*22,wy-50,16,22);}
-for(let b=0;b<3;b++){ctx.fillRect(wx-58+b*22,wy-50,16,22);}
-// Arrow slits
-ctx.fillStyle=’#0a0818’;
-for(let s=0;s<3;s++){ctx.fillRect(wx-15+s*15,wy+15,6,18);}
-}
-break;
-}
-case ‘dragonhill’:{
-// Rolling chalk hills + white dragon outline
-ctx.globalAlpha=0.42;
-for(let i=0;i<6;i++){
-const hx=((i*255+sx*0.33)%(W+360))-90;
-ctx.fillStyle=`hsl(120,${30+i*3}%,${12+i*2}%)`;
-ctx.beginPath();ctx.ellipse(hx,H*0.78,145+i*15,55+i*8,0,0,Math.PI*2);ctx.fill();
-}
-// Chalk dragon silhouette on hillside
-ctx.globalAlpha=0.22;ctx.strokeStyle=’#ddeecc’;ctx.lineWidth=10;ctx.lineCap=‘round’;
-const dhx=(sx*0.38)%(W+200)-100;
-ctx.beginPath();ctx.moveTo(dhx,H*0.62);ctx.quadraticCurveTo(dhx+80,H*0.48,dhx+170,H*0.55);
-ctx.moveTo(dhx+90,H*0.5);ctx.lineTo(dhx+110,H*0.4);
-ctx.stroke();
-break;
-}
-case ‘ryugu’:{
-// Crystal waves
-ctx.globalAlpha=0.32;
-for(let i=0;i<6;i++){
-const rw=((i*210+sx*0.65)%(W+280))-80;
-ctx.strokeStyle=`rgba(${68+i*10},${180+i*8},255,0.9)`;ctx.lineWidth=3;
-ctx.beginPath();ctx.moveTo(rw-70,H*0.5);ctx.bezierCurveTo(rw-22,H*0.44+Math.sin(ph+i)*14,rw+22,H*0.54+Math.sin(ph+i)*12,rw+70,H*0.49);ctx.stroke();
-}
-// Sea bubbles
-ctx.globalAlpha=0.2;ctx.strokeStyle=’#88ccff’;ctx.lineWidth=1.5;
-for(let i=0;i<20;i++){
-const bx=((i*120+sx*0.8)%(W+100))-40;const by=H*(0.55+Math.random()*0.38);
-ctx.beginPath();ctx.arc(bx,by,3+Math.random()*6,0,Math.PI*2);ctx.stroke();
-}
-break;
-}
-case ‘naga’:{
-// Temple columns
-ctx.globalAlpha=0.4;
-for(let i=0;i<7;i++){
-const nx=((i*185+sx*0.48)%(W+280))-60;
-ctx.fillStyle=’#162822’;ctx.fillRect(nx-13,H*0.38,26,H*0.58);
-ctx.fillStyle=’#223830’;ctx.fillRect(nx-18,H*0.36,36,20);ctx.fillRect(nx-18,H*0.94,36,14);
-// Naga carvings
-ctx.strokeStyle=’#2a5040’;ctx.lineWidth=2;
-ctx.beginPath();ctx.moveTo(nx,H*0.46);ctx.quadraticCurveTo(nx+10,H*0.53,nx,H*0.6);ctx.stroke();
-}
-// Lotus flowers on water
-ctx.globalAlpha=0.3;
-for(let i=0;i<8;i++){
-const lx=((i*165+sx*0.6)%(W+200))-50;const ly=H*0.88;
-ctx.fillStyle=’#ff88aa’;ctx.beginPath();ctx.arc(lx,ly,12,0,Math.PI*2);ctx.fill();
-ctx.fillStyle=’#ffaacc’;
-for(let p=0;p<6;p++){const a=p/6*Math.PI*2;ctx.beginPath();ctx.ellipse(lx+Math.cos(a)*14,ly+Math.sin(a)*10,7,12,a,0,Math.PI*2);ctx.fill();}
-}
-break;
-}
-}
-ctx.restore();
-}
-
-// ================================================================
-//  FLIGHT SYSTEM
-// ================================================================
-let flight=null;
-function createFlight(drg,city){
-return {
-drg,city,x:W*0.3,y:H*0.48,
-vx:drg.maxS*0.28,vy:0,angle:0,tAngle:0,
-speed:drg.maxS*0.32,wPhase:0,facing:1,
-boost:0,breath:0,scrollX:0,scrollY:0,phase:0,
-score:0,rings:0,time:0,totalTime:0,
-mode:‘race’,raceFinished:false,
-tricks:0,combo:0,comboTimer:0,
-trailDots:[],thermal:0,
-ringObjs: Array.from({length:12},(*,i)=>({x:W*0.85+i*(W*0.65+Math.random()*80),y:H*(0.22+Math.random()*0.56),r:42+Math.random()*24,passed:false,glow:0})),
-coinObjs: Array.from({length:40},(*,i)=>({x:W*0.6+i*(W*0.38+Math.random()*100),y:H*(0.18+Math.random()*0.64),r:13,collected:false})),
-paused:false,overlay:null,overlayTimer:0,
-};
-}
-function updateFlight(f,dt){
-if(f.paused||f.overlay)return;
-f.phase+=dt*0.6; f.totalTime+=dt;
-if(f.mode===‘race’)f.time+=dt;
-const b=game.bond[f.drg.id]||{bond:50};
-const st=game.stats[f.drg.id]||{speed:5,stamina:5,agility:5,power:5};
-const sM=0.82+st.speed*0.036; const aM=0.82+st.agility*0.036; const bM=0.82+(b.bond/100)*0.36;
-// Input aggregation
-let pitchIn=0,rollIn=0,boostIn=false,breathIn=false;
-if(keys[‘ArrowUp’]||keys[‘KeyW’])pitchIn=-1;
-if(keys[‘ArrowDown’]||keys[‘KeyS’])pitchIn=1;
-if(keys[‘ArrowLeft’]||keys[‘KeyA’])rollIn=-1;
-if(keys[‘ArrowRight’]||keys[‘KeyD’])rollIn=1;
-if(keys[‘Space’]||keys[‘ShiftLeft’])boostIn=true;
-if(keys[‘KeyF’]||keys[‘KeyE’])breathIn=true;
-// Joystick
-if(JOY.active){rollIn+=JOY.dx;pitchIn+=JOY.dy;}
-// Action buttons
-if(ABTN.boost)boostIn=true;
-if(ABTN.breath)breathIn=true;
-if(ABTN.up)pitchIn-=0.85;
-if(ABTN.down)pitchIn+=0.85;
-// Clamp
-rollIn=Math.max(-1,Math.min(1,rollIn));
-pitchIn=Math.max(-1,Math.min(1,pitchIn));
-// Steering
-const tr=f.drg.turn*aM*bM*dt*60;
-f.tAngle+=rollIn*tr*0.022+pitchIn*tr*0.016;
-f.tAngle*=0.955; // auto-level
-f.angle=f.angle*0.88+f.tAngle*0.12;
-// Speed
-const maxS=f.drg.maxS*sM*bM;
-if(boostIn&&f.boost<=0){f.speed=Math.min(maxS,f.speed+300*dt);if(Math.random()<0.04)whoosh();}
-else{const g2=-Math.sin(f.angle)*145;f.speed+=(g2-f.speed*f.drg.drag*60)*dt;f.speed=Math.max(f.drg.minS,Math.min(maxS,f.speed));}
-// Thermal
-f.thermal=Math.sin(f.totalTime*0.28+f.x*0.002)*0.5+0.5;
-const lift=f.drg.lift*f.thermal*48*dt;
-// Velocity
-f.vx=f.vx*0.82+Math.cos(f.angle)*f.speed*0.18;
-f.vy=f.vy*0.82+(Math.sin(f.angle)*f.speed-lift)*0.18;
-f.wPhase+=dt*(f.drg.flap/120+Math.abs(f.vx)*0.002);
-if(f.wPhase>Math.PI*20)f.wPhase-=Math.PI*20;
-if(f.vx>6)f.facing=1;else if(f.vx<-6)f.facing=-1;
-// Scroll
-f.scrollX+=f.vx*dt; f.scrollY+=f.vy*dt;
-f.y=Math.max(H*0.06,Math.min(H*0.93,f.y*0.89+(H*0.48+f.vy*0.07)*0.11));
-f.x=f.x*0.9+(W*0.3+(f.vx-f.speed*0.28)*0.07)*0.1;
-if(f.boost>0)f.boost-=dt;
-if(f.breath>0)f.breath-=dt;
-// Breath
-if(breathIn&&f.breath<=0){
-f.breath=0.55;pBreath(f.drg.id===‘nightfury’?440:f.drg.id===‘lung’?330:f.drg.id===‘oillipheist’?550:660);
-boom(f.x+52*f.facing,f.y,f.drg.breath,18,4.5);f.score+=50;
-if(f.drg.rainbow)for(let i=0;i<10;i++)rainbowP(f.x+50*f.facing+(Math.random()-0.5)*40,f.y+(Math.random()-0.5)*30);
-}
-// Trail
-if(f.drg.rainbow){rainbowP(f.x-30*f.facing,f.y+Math.sin(f.wPhase)*4);if(Math.random()<0.35)rainbowP(f.x-22*f.facing+(Math.random()-0.5)*20,f.y+(Math.random()-0.5)*18);}
-else trailP(f.x-30*f.facing,f.y,f.drg.trail);
-// Trail history
-f.trailDots.push({x:f.x,y:f.y});if(f.trailDots.length>28)f.trailDots.shift();
-// Rings
-for(const ring of f.ringObjs){
-ring.glow=Math.max(0,ring.glow-dt*2.5);
-if(ring.passed)continue;
-const wx=ring.x-f.scrollX;const wy=ring.y-f.scrollY+H*0.5;
-if(wx<-120||wx>W+120)continue;
-if(inCirc(f.x,f.y,wx,wy,ring.r+10)){
-ring.passed=true;ring.glow=1;f.rings++;f.score+=220;
-boom(wx,wy,f.drg.acc,22,5.5);pSuccess();
-if(f.drg.rainbow)for(let i=0;i<12;i++)rainbowP(wx+(Math.random()-0.5)*70,wy+(Math.random()-0.5)*50);
-}
-}
-// Coins
-for(const coin of f.coinObjs){
-if(coin.collected)continue;
-const wx=coin.x-f.scrollX;const wy=coin.y-f.scrollY+H*0.5;
-if(wx<-70||wx>W+70)continue;
-if(inCirc(f.x,f.y,wx,wy,coin.r+14)){
-coin.collected=true;f.score+=35;
-tone(880+f.rings*22,0.1,‘sine’,0.18);
-addP(wx,wy,0,-2,0.5,’#ffee00’,9);
-}
-}
-// Tricks
-if(Math.abs(f.angle)>Math.PI*0.88){
-f.comboTimer+=dt;
-if(f.comboTimer>0.45){f.tricks++;f.combo++;f.score+=110*f.combo;f.comboTimer=0;boom(f.x,f.y,f.drg.acc,12,3.5);}
-} else {f.comboTimer=0;if(f.combo>0&&(f.comboTimer+=dt)>1.2){f.combo=0;}}
-// Race finish
-if(f.mode===‘race’&&f.rings>=f.ringObjs.length&&!f.raceFinished){
-f.raceFinished=true;const pb=game.best[f.city]||9999;
-if(f.time<pb)game.best[f.city]=f.time;
-game.flights++;saveGame();fanfare();f.overlay=‘result’;f.overlayTimer=5.5;
-}
-if(f.overlay===‘result’){f.overlayTimer-=dt;if(f.overlayTimer<=0){f.overlay=null;state=S.HUB;flight=null;}}
-}
-
-function drawFlight(f){
-drawCityBg(f.city,f.scrollX,f.phase);
-// Rings
-for(const ring of f.ringObjs){
-const wx=ring.x-f.scrollX;const wy=ring.y-f.scrollY+H*0.5;
-if(wx<-130||wx>W+130)continue;
-ctx.save();ctx.globalAlpha=ring.passed?0.22:0.88+0.08*Math.sin(f.phase*2.2);
-ctx.strokeStyle=ring.passed?’#444’:f.drg.acc;
-ctx.shadowColor=f.drg.acc;ctx.shadowBlur=ring.glow*32+6;ctx.lineWidth=5.5;
-ctx.beginPath();ctx.arc(wx,wy,ring.r,0,Math.PI*2);ctx.stroke();
-if(!ring.passed){ctx.globalAlpha=0.12;ctx.fillStyle=f.drg.acc;ctx.beginPath();ctx.arc(wx,wy,ring.r,0,Math.PI*2);ctx.fill();}
-ctx.restore();
-// Ring number if not passed
-if(!ring.passed){const rn=f.ringObjs.filter((r,i)=>i<=f.ringObjs.indexOf(ring)).filter(r=>!r.passed).length;txt(rn>0?rn:’’,wx,wy+5,14,‘rgba(255,255,255,0.6)’);}
-}
-// Coins
-for(const coin of f.coinObjs){
-if(coin.collected)continue;
-const wx=coin.x-f.scrollX;const wy=coin.y-f.scrollY+H*0.5;
-if(wx<-65||wx>W+65)continue;
-ctx.save();ctx.shadowColor=’#ffee00’;ctx.shadowBlur=12;
-ctx.fillStyle=’#ffdd00’;ctx.strokeStyle=’#aa8800’;ctx.lineWidth=1.8;
-ctx.beginPath();ctx.arc(wx,wy,coin.r,0,Math.PI*2);ctx.fill();ctx.stroke();
-txt(‘✦’,wx,wy+4,11,’#ffe040’);
-ctx.restore();
-}
-// Trail
-ctx.save();ctx.lineWidth=3.5;ctx.lineCap=‘round’;
-for(let i=1;i<f.trailDots.length;i++){
-const a=i/f.trailDots.length;
-if(f.drg.rainbow){hue=(hue+2)%360;ctx.strokeStyle=`hsla(${hue},100%,65%,${a*0.7})`;}
-else ctx.strokeStyle=f.drg.trail;
-ctx.globalAlpha=a*0.58;
-ctx.beginPath();ctx.moveTo(f.trailDots[i-1].x,f.trailDots[i-1].y);ctx.lineTo(f.trailDots[i].x,f.trailDots[i].y);ctx.stroke();
-}
-ctx.restore();
-// Breath
-if(f.breath>0){
-ctx.save();ctx.globalAlpha=f.breath*0.9;
-const bx=f.x+72*f.facing;
-const bg=ctx.createRadialGradient(f.x+42*f.facing,f.y,3,bx,f.y,65);
-bg.addColorStop(0,f.drg.breath);bg.addColorStop(1,‘transparent’);
-ctx.fillStyle=bg;ctx.beginPath();ctx.arc(bx,f.y,65,0,Math.PI*2);ctx.fill();
-ctx.restore();
-}
-// Dragon
-const ds=Math.min(W/640,H/360)*1.1;
-drawDragonAt(f.drg,f.x,f.y,ds,f.angle,f.wPhase,f.facing);
-drawP();
-drawFlightHUD(f);
-drawJoystick();
-drawFlightButtons();
-if(f.combo>1){ctx.save();ctx.globalAlpha=Math.min(1,f.comboTimer>0.3?1:f.comboTimer/0.3);glow(`COMBO x${f.combo}!`,W/2,H*0.14,Math.min(H*0.045,32),f.drg.acc,f.drg.acc,20);ctx.restore();}
-if(f.paused)drawPauseOverlay(f);
-if(f.overlay===‘result’)drawResultOverlay(f);
-}
-
-function drawFlightHUD(f){
-const city=CITIES.find(c=>c.id===f.city)||CITIES[0];
-// Score panel
-ctx.save();
-ctx.fillStyle=‘rgba(0,0,0,0.5)’;rr(8,8,200,50,10);ctx.fill();
-glow(`✦ ${f.score}`,110,32,20,f.drg.acc,f.drg.acc,8);
-txt(f.drg.name,110,50,12,’#aaa’);
-// Speed
-ctx.fillStyle=‘rgba(0,0,0,0.5)’;rr(W-188,8,180,50,10);ctx.fill();
-const spd=Math.round(Math.hypot(f.vx,f.vy)*0.055);
-glow(`${spd} kn`,W-98,32,20,’#aaffaa’,’#44ff44’,8);
-txt(‘SPEED’,W-98,50,11,’#888’);
-// Race HUD
-if(f.mode===‘race’){
-ctx.fillStyle=‘rgba(0,0,0,0.5)’;rr(W/2-100,8,200,50,10);ctx.fill();
-txt(`🏁 ${f.rings}/${f.ringObjs.length}`,W/2,28,14,f.drg.acc);
-txt(`⏱ ${f.time.toFixed(1)}s`,W/2,48,14,’#ddd’);
-}
-// Bond & thermal bars (above joystick)
-const bary=H-JOY.radius*2-JOY.radius-45;
-const bd=game.bond[f.drg.id]||{bond:50};
-ctx.fillStyle=‘rgba(0,0,0,0.4)’;rr(8,bary,145,44,8);ctx.fill();
-txt(‘❤ BOND’,80,bary+14,11,f.drg.acc);
-bar(14,bary+18,130,10,bd.bond/100,f.drg.acc,’#1a1a2a’);
-txt(‘☁ LIFT’,80,bary+34,11,’#88ffaa’);
-bar(14,bary+36,130,10,f.thermal,’#88ffaa’,’#1a2a1a’);
-// City name
-txt(city.name+’ · ‘+city.icon,W/2,H-8,12,‘rgba(255,255,255,0.35)’);
-// Pause hint
-txt(’[P] Pause’,W-60,H-8,10,‘rgba(255,255,255,0.25)’);
-ctx.restore();
-}
-
-function drawJoystick(){
-if(state!==S.FLIGHT)return;
-ctx.save();
-// Outer ring
-ctx.globalAlpha=0.55;
-ctx.strokeStyle=‘rgba(160,180,255,0.7)’;ctx.lineWidth=2.5;
-ctx.fillStyle=‘rgba(10,14,40,0.55)’;
-ctx.beginPath();ctx.arc(JOY.bx,JOY.by,JOY.radius,0,Math.PI*2);ctx.fill();ctx.stroke();
-// Cross-hairs
-ctx.globalAlpha=0.2;ctx.strokeStyle=‘rgba(160,180,255,0.5)’;ctx.lineWidth=1;
-ctx.setLineDash([4,6]);
-ctx.beginPath();ctx.moveTo(JOY.bx-JOY.radius,JOY.by);ctx.lineTo(JOY.bx+JOY.radius,JOY.by);ctx.stroke();
-ctx.beginPath();ctx.moveTo(JOY.bx,JOY.by-JOY.radius);ctx.lineTo(JOY.bx,JOY.by+JOY.radius);ctx.stroke();
-ctx.setLineDash([]);
-// Knob
-ctx.globalAlpha=JOY.active?0.88:0.62;
-const kg=ctx.createRadialGradient(JOY.cx-4,JOY.cy-4,2,JOY.cx,JOY.cy,JOY.knobR);
-kg.addColorStop(0,‘rgba(120,160,255,0.95)’);kg.addColorStop(1,‘rgba(30,50,160,0.85)’);
-ctx.fillStyle=kg;
-ctx.shadowColor=’#6699ff’;ctx.shadowBlur=JOY.active?18:8;
-ctx.beginPath();ctx.arc(JOY.cx,JOY.cy,JOY.knobR,0,Math.PI*2);ctx.fill();
-ctx.strokeStyle=‘rgba(150,180,255,0.9)’;ctx.lineWidth=2;ctx.shadowBlur=0;
-ctx.beginPath();ctx.arc(JOY.cx,JOY.cy,JOY.knobR,0,Math.PI*2);ctx.stroke();
-// Arrow indicators
-ctx.globalAlpha=0.4;ctx.fillStyle=’#fff’;
-const ar=[{dx:0,dy:-1,l:‘▲’},{dx:0,dy:1,l:‘▼’},{dx:-1,dy:0,l:‘◀’},{dx:1,dy:0,l:‘▶’}];
-ar.forEach(a=>{txt(a.l,JOY.bx+a.dx*(JOY.radius-14),JOY.by+a.dy*(JOY.radius-14)+5,11,‘rgba(200,210,255,0.6)’);});
-ctx.restore();
-}
-
-function drawFlightButtons(){
-if(state!==S.FLIGHT)return;
-const br=BTN_REGIONS();
-const drg=flight?flight.drg:DRAGONS[0];
-ctx.save();
-// BOOST
-const bHov=ABTN.boost;
-ctx.globalAlpha=bHov?0.95:0.7;
-ctx.shadowColor=drg.acc;ctx.shadowBlur=bHov?22:10;
-const bg=ctx.createRadialGradient(br.boost.x,br.boost.y-8,4,br.boost.x,br.boost.y,br.boost.r);
-bg.addColorStop(0,bHov?lc(drg.acc,30):‘rgba(20,40,100,0.9)’);bg.addColorStop(1,‘rgba(10,20,60,0.85)’);
-ctx.fillStyle=bg;ctx.beginPath();ctx.arc(br.boost.x,br.boost.y,br.boost.r,0,Math.PI*2);ctx.fill();
-ctx.strokeStyle=drg.acc;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(br.boost.x,br.boost.y,br.boost.r,0,Math.PI*2);ctx.stroke();
-ctx.globalAlpha=1;txt(‘BOOST’,br.boost.x,br.boost.y-6,13,’#fff’);txt(‘⚡’,br.boost.x,br.boost.y+12,18,’#fff’);
-// BREATH
-const brHov=ABTN.breath;
-ctx.globalAlpha=brHov?0.95:0.7;ctx.shadowColor=drg.breath;ctx.shadowBlur=brHov?22:10;
-const brg=ctx.createRadialGradient(br.breath.x,br.breath.y-8,4,br.breath.x,br.breath.y,br.breath.r);
-brg.addColorStop(0,brHov?lc(drg.breath,20):‘rgba(80,20,0,0.9)’);brg.addColorStop(1,‘rgba(40,10,0,0.85)’);
-ctx.fillStyle=brg;ctx.beginPath();ctx.arc(br.breath.x,br.breath.y,br.breath.r,0,Math.PI*2);ctx.fill();
-ctx.strokeStyle=drg.breath;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(br.breath.x,br.breath.y,br.breath.r,0,Math.PI*2);ctx.stroke();
-ctx.globalAlpha=1;txt(drg.breathType.split(’ ‘)[0],br.breath.x,br.breath.y-6,12,’#fff’);txt(‘🔥’,br.breath.x,br.breath.y+12,18,’#fff’);
-// UP / DOWN (altitude buttons)
-[br.up,br.down].forEach((b,i)=>{
-const hov=i===0?ABTN.up:ABTN.down;
-ctx.globalAlpha=hov?0.88:0.55;
-ctx.fillStyle=hov?‘rgba(80,120,200,0.9)’:‘rgba(20,30,70,0.75)’;
-ctx.shadowColor=’#4488ff’;ctx.shadowBlur=hov?14:5;
-ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();
-ctx.strokeStyle=‘rgba(100,140,255,0.7)’;ctx.lineWidth=2;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.stroke();
-ctx.globalAlpha=1;txt(i===0?‘▲’:‘▼’,b.x,b.y+6,18,‘rgba(200,220,255,0.9)’);
-});
-ctx.shadowBlur=0;ctx.restore();
-}
-
-function drawPauseOverlay(f){
-ctx.save();ctx.fillStyle=‘rgba(0,0,0,0.7)’;ctx.fillRect(0,0,W,H);
-glow(‘⏸ PAUSED’,W/2,H*0.3,Math.min(H*0.06,42),’#fff’,’#aaaaff’,22);
-const items=[{l:‘▶ Resume’,a:()=>{f.paused=false;}},{l:‘🗺 World Map’,a:()=>{state=S.MAP;flight=null;}},{l:‘📖 Codex’,a:()=>{prevCodexState=S.FLIGHT;state=S.CODEX;initCodex();}}];
-items.forEach((it,i)=>{
-const by=H*0.44+i*64;const hov=isHov(W/2,by,260,50);
-btn(it.l,W/2,by,260,50,’#223366’,hov);
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,W/2,by,260,50)){clickQ.splice(ci,1);it.a();pClick();break;}}
-});
-txt(‘Tap outside buttons to dismiss’,W/2,H*0.72,12,’#444’);
-ctx.restore();
-}
-function drawResultOverlay(f){
-ctx.save();ctx.fillStyle=‘rgba(0,0,12,0.75)’;ctx.fillRect(0,0,W,H);
-glow(‘🏁 RACE COMPLETE!’,W/2,H*0.28,Math.min(H*0.055,38),’#ffe040’,’#ff8800’,24);
-glow(`Time: ${f.time.toFixed(2)}s`,W/2,H*0.38,Math.min(H*0.042,28),f.drg.acc,f.drg.acc,14);
-const pb=game.best[f.city];if(pb&&f.time<=pb+0.01)glow(‘✦ NEW PERSONAL BEST!’,W/2,H*0.46,22,’#88ff44’,’#44ff00’,12);
-glow(`Score: ${f.score}`,W/2,H*0.54,Math.min(H*0.036,24),’#fff’,’#aaa’,10);
-txt(‘Returning to hub…’,W/2,H*0.64,15,’#666’);
-ctx.restore();
-}
-
-// ================================================================
-//  TRAINING MINI-GAMES
-// ================================================================
-let training=null;
-function createTraining(drg,cityId,gameType){
-const city=CITIES.find(c=>c.id===cityId)||CITIES[0];
-const t={drg,city,gameType,timer:32,done:false,score:0,phase:0,result:null};
-if(gameType===‘feeding’){t.foodQ=(city.foods||[‘Food’]).concat(city.foods||[‘Food’]).slice(0,5);t.foodIdx=0;}
-if(gameType===‘grooming’){
-const cx=W/2,cy=H*0.45;
-t.spots=[{dx:-32,dy:-8},{dx:22,dy:-22},{dx:2,dy:14},{dx:44,dy:4},{dx:-52,dy:4},{dx:28,dy:-36}].map((o,i)=>({x:cx+o.dx,y:cy+o.dy,r:22,glow:0,done:false}));
-}
-if(gameType===‘fetch’){t.throwX=W*0.6;t.throwY=H*0.5;t.thrown=false;t.meter=0;t.charging=false;t.fetchCount=0;}
-if(gameType===‘lair’){
-const trs=city.treas||[‘Treasure’];
-t.treasures=trs.map((n,i)=>({name:n,px:55+i*88,py:H*0.83,w:74,h:42,placed:false,dragging:false}));
-t.zones=trs.map((_,i)=>({x:W*0.38+i*82,y:H*0.55,w:68,h:42,filled:false}));
-}
-return t;
-}
-function updateTraining(t,dt){
-if(t.done)return;
-t.timer-=dt;t.phase+=dt;
-if(t.timer<=0){t.timer=0;finishTraining(t);return;}
-if(t.gameType===‘feeding’){
-for(let ci=0;ci<clickQ.length;ci++){
-if(inBox(clickQ[ci].x,clickQ[ci].y,W/2,H*0.76,190,56)){
-clickQ.splice(ci,1);pSuccess();boom(W/2,H*0.76,t.drg.acc,12,3);
-t.score+=85;t.foodIdx++;
-if(t.foodIdx>=t.foodQ.length){finishTraining(t);return;}
-}
-}
-}
-if(t.gameType===‘grooming’){
-t.spots.forEach(sp=>{sp.glow=inCirc(mouse.x,mouse.y,sp.x,sp.y,sp.r+10)?Math.min(1,sp.glow+dt*3):Math.max(0,sp.glow-dt*2);});
-for(let ci=0;ci<clickQ.length;ci++){
-const hit=t.spots.find(sp=>!sp.done&&inCirc(clickQ[ci].x,clickQ[ci].y,sp.x,sp.y,sp.r+14));
-if(hit){clickQ.splice(ci,1);ci–;hit.done=true;t.score+=65;pSuccess();boom(hit.x,hit.y,t.drg.acc,9,2.5);}
-}
-if(t.spots.every(s=>s.done))finishTraining(t);
-}
-if(t.gameType===‘fetch’){
-if(!t.thrown){
-if(mouse.down&&mouse.y<H*0.72&&mouse.x>W*0.15&&mouse.x<W*0.75)t.meter=Math.min(1,(t.meter||0)+dt*1.3);
-if(!mouse.down&&t.meter>0.08){
-t.thrown=true;t.tvx=(mouse.x-W*0.22)*1.4;t.tvy=(mouse.y-H*0.5)*1.3;
-t.throwX=W*0.22;t.throwY=H*0.5;whoosh();
-}
-} else {
-t.throwX+=t.tvx*dt;t.throwY+=t.tvy*dt;t.tvy+=190*dt;
-if(t.throwY>H*0.77){t.thrown=false;t.fetchCount++;t.score+=55+Math.round(t.meter*110);boom(t.throwX,H*0.77,t.drg.acc,16,4);pSuccess();t.meter=0;}
-}
-if(t.fetchCount>=4)finishTraining(t);
-}
-if(t.gameType===‘lair’){
-for(let ci=0;ci<clickQ.length;ci++){
-let removed=false;
-t.treasures.forEach(tr=>{
-if(!tr.placed&&!removed&&inBox(clickQ[ci].x,clickQ[ci].y,tr.px,tr.py,tr.w,tr.h)){
-tr.dragging=!tr.dragging;clickQ.splice(ci,1);ci–;removed=true;
-}
-});
-}
-t.treasures.forEach(tr=>{
-if(tr.dragging){tr.px=mouse.x;tr.py=mouse.y;}
-if(!tr.placed&&!mouse.down&&tr.dragging){
-const z=t.zones.find(z=>!z.filled&&inBox(tr.px,tr.py,z.x,z.y,z.w+20,z.h+20));
-if(z){z.filled=true;tr.placed=true;tr.dragging=false;tr.px=z.x;tr.py=z.y;t.score+=75;pSuccess();boom(z.x,z.y,t.drg.acc,12,3);}
-else tr.dragging=false;
-}
-});
-if(t.treasures.every(tr=>tr.placed))finishTraining(t);
-}
-}
-function finishTraining(t){
-if(t.done)return;t.done=true;
-initBond(t.drg.id);
-const b=game.bond[t.drg.id];const st=game.stats[t.drg.id];
-const gain=Math.min(10,t.score/55);
-b.bond=Math.min(100,b.bond+gain);b.hunger=Math.min(100,b.hunger+(t.gameType===‘feeding’?22:5));
-b.affection=Math.min(100,b.affection+(t.gameType===‘grooming’||t.gameType===‘fetch’?16:5));
-if(t.gameType===‘feeding’)st.stamina=Math.min(10,st.stamina+0.32);
-if(t.gameType===‘grooming’)st.agility=Math.min(10,st.agility+0.32);
-if(t.gameType===‘fetch’)st.speed=Math.min(10,st.speed+0.32);
-if(t.gameType===‘lair’)st.power=Math.min(10,st.power+0.32);
-t.result={score:t.score,gain:gain.toFixed(1)};
-fanfare();saveGame();
-}
-function drawTraining(t){
-const drg=t.drg;const city=t.city;
-const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,city.sky1);g.addColorStop(0.6,city.sky2);g.addColorStop(1,city.sky3);
-ctx.fillStyle=g;ctx.fillRect(0,0,W,H);drawStars(0.18,t.phase);
-const pw=Math.min(W*0.9,580);const px=W/2-pw/2;
-ctx.fillStyle=‘rgba(0,0,0,0.58)’;rr(px,H*0.03,pw,H*0.9,18);ctx.fill();
-ctx.strokeStyle=drg.acc;ctx.lineWidth=2;rr(px,H*0.03,pw,H*0.9,18);ctx.stroke();
-const titles={feeding:‘🍖 Feeding Time’,grooming:‘✨ Scale Grooming’,fetch:‘🎯 Fetch & Play’,lair:‘🪺 Lair Decorating’};
-glow(titles[t.gameType]||‘Training’,W/2,H*0.1,Math.min(H*0.04,26),drg.acc,drg.acc,12);
-txt(`${city.name} · ${drg.name} · ${drg.food}`,W/2,H*0.155,13,’#aaa’);
-bar(W/2-140,H*0.19,280,13,t.timer/32,t.timer>10?drg.acc:’#ff4444’,’#222’);
-txt(`${Math.ceil(t.timer)}s  |  Score: ${t.score}`,W/2,H*0.215,13,’#ddd’);
-const ds=Math.min(W,H)*0.0018;
-ctx.save();ctx.translate(W*0.5-120,H*0.44);ctx.scale(ds,ds);
-if(drg.serp)drawSerpent(drg,t.phase*2.5);else drawWyrm(drg,t.phase*2.5);
-ctx.restore();
-if(t.gameType===‘feeding’)drawFeedUI(t);
-else if(t.gameType===‘grooming’)drawGroomUI(t);
-else if(t.gameType===‘fetch’)drawFetchUI(t);
-else drawLairUI(t);
-if(t.done&&t.result){
-ctx.save();ctx.fillStyle=‘rgba(0,0,0,0.78)’;rr(W/2-175,H*0.28,350,230,16);ctx.fill();
-ctx.strokeStyle=drg.acc;ctx.lineWidth=2;rr(W/2-175,H*0.28,350,230,16);ctx.stroke();
-glow(‘✦ TRAINING COMPLETE!’,W/2,H*0.37,22,drg.acc,drg.acc,14);
-txt(`Score: ${t.result.score}`,W/2,H*0.44,18,’#fff’);
-glow(`Bond +${t.result.gain} ❤`,W/2,H*0.5,17,drg.acc,drg.acc,8);
-txt(‘Stats improved!’,W/2,H*0.56,14,’#888’);
-const by=H*0.63;const hov=isHov(W/2,by,200,46);
-btn(‘Back to Hub’,W/2,by,200,46,’#223366’,hov);
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,W/2,by,200,46)){clickQ.splice(ci,1);state=S.HUB;training=null;pClick();break;}}
-ctx.restore();
-}
-if(!t.done){const hov=isHov(60,34,98,36);btn(‘← Back’,60,34,98,36,’#223344’,hov);for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,60,34,98,36)){clickQ.splice(ci,1);state=S.HUB;training=null;pClick();break;}}}
-drawP();
-}
-function drawFeedUI(t){
-if(t.foodIdx>=t.foodQ.length)return;
-const food=t.foodQ[t.foodIdx];
-const hov=isHov(W/2,H*0.76,195,56);
-ctx.save();ctx.globalAlpha=0.92+0.06*Math.sin(t.phase*4);
-btn(`${t.drg.foodEm} Feed ${food}`,W/2,H*0.76,195,56,’#334422’,hov);
-ctx.restore();
-txt(`Feeding: ${t.foodIdx+1} / ${t.foodQ.length}`,W/2,H*0.68,15,’#aaa’);
-txti(’”’+t.drg.name+’ opens its mouth eagerly!”’,W/2,H*0.62,13,’#777’);
-}
-function drawGroomUI(t){
-const sw=Math.min(W,H)*0.0018;
-const cx=W/2,cy=H*0.45;
-t.spots.forEach(sp=>{
-if(sp.done){ctx.save();ctx.globalAlpha=0.35;ctx.fillStyle=’#00ff88’;ctx.beginPath();ctx.arc(cx+sp.dx*sw/0.0018,cy+sp.dy*sw/0.0018,sp.r*sw/0.0018,0,Math.PI*2);ctx.fill();ctx.restore();
-const sx2=cx+(sp.dx||0)*sw/0.0018;const sy2=cy+(sp.dy||0)*sw/0.0018;
-ctx.save();ctx.globalAlpha=0.35;ctx.fillStyle=’#00ff88’;ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r,0,Math.PI*2);ctx.fill();ctx.restore();
-return;
-}
-ctx.save();ctx.globalAlpha=0.5+sp.glow*0.5;ctx.shadowColor=t.drg.acc;ctx.shadowBlur=8+sp.glow*18;
-ctx.strokeStyle=t.drg.acc;ctx.lineWidth=3;ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r*(1+sp.glow*0.12),0,Math.PI*2);ctx.stroke();
-ctx.fillStyle=t.drg.acc;ctx.globalAlpha=0.15+sp.glow*0.28;ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r,0,Math.PI*2);ctx.fill();
-ctx.restore();
-});
-txt(`Tap the glowing spots! (${t.spots.filter(s=>!s.done).length} left)`,W/2,H*0.82,15,’#aaa’);
-}
-function drawFetchUI(t){
-if(t.thrown){
-ctx.save();ctx.fillStyle=t.drg.acc;ctx.shadowColor=t.drg.acc;ctx.shadowBlur=14;
-ctx.beginPath();ctx.arc(t.throwX,t.throwY,13,0,Math.PI*2);ctx.fill();ctx.restore();
-txti(’”’+t.drg.name+’ chases it!”’,W/2,H*0.82,14,’#888’);
-} else {
-if(t.meter>0){
-ctx.save();ctx.strokeStyle=t.drg.acc;ctx.lineWidth=9;ctx.globalAlpha=0.75;
-ctx.beginPath();ctx.arc(W*0.22,H*0.5,44,Math.PI,Math.PI+Math.PI*t.meter);ctx.stroke();
-txt(`${Math.round(t.meter*100)}%`,W*0.22,H*0.5+6,16,t.drg.acc);ctx.restore();
-}
-txt(t.meter>0?‘Release to throw!’:‘Hold screen to charge throw!’,W/2,H*0.82,15,’#aaa’);
-ctx.save();ctx.globalAlpha=0.22;ctx.strokeStyle=’#fff’;ctx.lineWidth=1.5;ctx.setLineDash([5,8]);
-ctx.beginPath();ctx.arc(W*0.22,H*0.5,58,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.restore();
-}
-txt(`Throws: ${t.fetchCount}/4`,W/2,H*0.88,14,’#777’);
-}
-function drawLairUI(t){
-t.zones.forEach((z,i)=>{
-ctx.save();ctx.globalAlpha=z.filled?0.18:0.5;ctx.strokeStyle=t.drg.acc;ctx.lineWidth=2.5;ctx.setLineDash([8,6]);
-rr(z.x-z.w/2,z.y-z.h/2,z.w,z.h,8);ctx.stroke();ctx.setLineDash([]);
-if(!z.filled){ctx.fillStyle=t.drg.acc;ctx.globalAlpha=0.07;rr(z.x-z.w/2,z.y-z.h/2,z.w,z.h,8);ctx.fill();}
-ctx.restore();
-});
-t.treasures.forEach(tr=>{
-if(tr.placed){
-ctx.save();ctx.globalAlpha=0.55;ctx.fillStyle=t.drg.acc;rr(tr.px-tr.w/2,tr.py-tr.h/2,tr.w,tr.h,8);ctx.fill();
-txt(tr.name,tr.px,tr.py+6,11,’#fff’);ctx.restore();return;
-}
-ctx.save();ctx.globalAlpha=tr.dragging?0.92:0.78;
-ctx.fillStyle=tr.dragging?t.drg.acc:’#334455’;
-if(tr.dragging){ctx.shadowColor=t.drg.acc;ctx.shadowBlur=16;}
-rr(tr.px-tr.w/2,tr.py-tr.h/2,tr.w,tr.h,8);ctx.fill();
-ctx.strokeStyle=t.drg.acc;ctx.lineWidth=1.8;rr(tr.px-tr.w/2,tr.py-tr.h/2,tr.w,tr.h,8);ctx.stroke();
-txt(tr.name,tr.px,tr.py+6,11,’#fff’);ctx.restore();
-});
-txt(`Drag treasures to the lair! (${t.treasures.filter(r=>!r.placed).length} remaining)`,W/2,H*0.88,14,’#aaa’);
-}
-
-// ================================================================
-//  CITY HUB
-// ================================================================
-let hub=null;
-function createHub(cityId){
-const city=CITIES.find(c=>c.id===cityId)||CITIES[0];
-const dr=DRAGONS.find(d=>d.id===city.dr)||DRAGONS[0];
-initBond(dr.id);return{city,drg:dr,phase:0};
-}
-function drawHub(h){
-const city=h.city;const drg=h.drg;h.phase+=0.012;
-const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,city.sky1);g.addColorStop(0.55,city.sky2);g.addColorStop(1,city.sky3);
-ctx.fillStyle=g;ctx.fillRect(0,0,W,H);drawStars(0.3,h.phase*40);
-drawCityDecorations(city.id,h.phase*14,h.phase*40,city);
-glow(city.icon+’ ’+city.name,W/2,H*0.07,Math.min(H*0.044,32),’#fff’,city.acc,18);
-txt(city.sub,W/2,H*0.12,Math.min(H*0.022,15),city.acc);
-
-const isMob=W<640;
-const b=game.bond[drg.id]||{bond:50,hunger:80,energy:100,affection:60};
-const st=game.stats[drg.id]||{speed:5,stamina:5,agility:5,power:5};
-const pw=Math.min(W*isMob?0.42:0.38,255);const px=W*0.04;
-
-// Bond panel
-ctx.fillStyle=‘rgba(0,0,0,0.52)’;rr(px,H*0.16,pw,H*0.52,14);ctx.fill();
-ctx.strokeStyle=city.acc;ctx.lineWidth=1.5;rr(px,H*0.16,pw,H*0.52,14);ctx.stroke();
-txt(drg.name,px+pw/2,H*0.16+H*0.04,16,drg.acc);
-txt(drg.pers,px+pw/2,H*0.16+H*0.07,12,’#aaa’);
-txt(drg.cls,px+pw/2,H*0.16+H*0.095,11,’#888’);
-const bars=[{l:‘❤ Bond’,v:b.bond,c:drg.acc},{l:‘🍖 Hunger’,v:b.hunger,c:’#88cc44’},{l:‘⚡ Energy’,v:b.energy,c:’#4488ff’},{l:‘✨ Affection’,v:b.affection,c:’#ff88aa’}];
-bars.forEach((br,i)=>{const by=H*0.16+H*0.165+i*H*0.062;txt(br.l,px+14,by-H*0.008,12,br.c,‘left’);bar(px+14,by,pw-28,10,br.v/100,br.c,’#222’);txt(Math.round(br.v),px+pw-10,by-H*0.008,12,’#aaa’,‘right’);});
-const stats=[{l:‘SPD’,v:st.speed},{l:‘STA’,v:st.stamina},{l:‘AGI’,v:st.agility},{l:‘PWR’,v:st.power}];
-const sy=H*0.16+H*0.415;txt(‘STATS’,px+pw/2,sy,12,’#666’);
-stats.forEach((s,i)=>{const sx2=px+14+i*(pw-14)/4;bar(sx2,sy+H*0.025,(pw-14)/4-8,8,s.v/10,drg.acc,’#333’);txt(s.l,sx2+(pw-14)/8-4,sy+H*0.05,10,’#aaa’);});
-
-// Dragon
-const ds=Math.min(W,H)*0.0026;
-const drx=isMob?W*0.74:W*0.74;const dry=H*0.36;
-drawDragonAt(drg,drx,dry,ds,Math.sin(h.phase*30)*0.05,h.phase*120,1);
-
-// Training buttons
-const bw=Math.min(W*0.23,148);const bh=42;
-const trainBtns=[{l:‘🍖 Feed’,g:‘feeding’},{l:‘✨ Groom’,g:‘grooming’},{l:‘🎯 Fetch’,g:‘fetch’},{l:‘🪺 Lair’,g:‘lair’}];
-const tbx=isMob?W*0.42:W*0.42;
-trainBtns.forEach((tb,i)=>{
-const bx=tbx+(i%2)*(bw+10);const by=H*0.3+(Math.floor(i/2))*(bh+10);
-const hov=isHov(bx,by,bw,bh);btn(tb.l,bx,by,bw,bh,’#223344’,hov);
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,bx,by,bw,bh)){clickQ.splice(ci,1);training=createTraining(drg,city.id,tb.g);state=S.TRAIN;pClick();break;}}
-});
-
-// Flight buttons
-const fbx=isMob?W*0.54:W*0.54;
-const fby=H*0.54;const fhov=isHov(fbx,fby,215,52);
-ctx.save();ctx.globalAlpha=0.92+0.07*Math.sin(h.phase*60);ctx.shadowColor=city.acc;ctx.shadowBlur=fhov?22:10;
-btn(‘🚀 Take Flight! (Race)’,fbx,fby,215,52,dc(city.acc,40),fhov);ctx.restore();
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,fbx,fby,215,52)){clickQ.splice(ci,1);initAudio();whoosh();flight=createFlight(drg,city.id);flight.mode=‘race’;state=S.FLIGHT;pClick();break;}}
-const ffby=H*0.62;const ffhov=isHov(fbx,ffby,215,44);
-btn(‘🌤 Free Explore’,fbx,ffby,215,44,’#223344’,ffhov);
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,fbx,ffby,215,44)){clickQ.splice(ci,1);initAudio();whoosh();flight=createFlight(drg,city.id);flight.mode=‘free’;state=S.FLIGHT;pClick();break;}}
-
-// Myth quote snippet
-const qw=Math.min(W*0.9,580);
-ctx.fillStyle=‘rgba(0,0,0,0.42)’;rr(W/2-qw/2,H*0.73,qw,H*0.22,12);ctx.fill();
-txti(’”’+drg.lore.slice(0,110)+’…”’,W/2,H*0.775,11.5,’#9a8a6a’);
-txt(‘📜 ‘+city.myth.slice(0,105)+’…’,W/2,H*0.82,11,’#7a6a4a’);
-txt(’[ Open Codex for full mythology sources ]’,W/2,H*0.86,11,’#5a5a7a’);
-
-// Nav buttons
-const nhov=isHov(60,34,105,34);btn(‘🗺 Map’,60,34,105,34,’#223344’,nhov);
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,60,34,105,34)){clickQ.splice(ci,1);state=S.MAP;pClick();break;}}
-const chov=isHov(W-68,34,110,34);btn(‘📖 Codex’,W-68,34,110,34,’#223344’,chov);
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,W-68,34,110,34)){clickQ.splice(ci,1);prevCodexState=S.HUB;state=S.CODEX;initCodex();pClick();break;}}
-drawP();
-}
-
-// ================================================================
-//  WORLD MAP
-// ================================================================
-let mapPulse=0,prevCodexState=S.MENU;
-function drawMap(){
-mapPulse+=0.016;
-const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,’#020810’);g.addColorStop(0.5,’#050c22’);g.addColorStop(1,’#08102a’);
-ctx.fillStyle=g;ctx.fillRect(0,0,W,H);drawStars(0.88,mapPulse*30);
-glow(‘✦  AETHERIA  ✦  WORLD MAP’,W/2,H*0.06,Math.min(H*0.036,26),’#d4c08c’,’#aa8844’,16);
-txt(‘10 Mythic Realms · Tap a city to enter’,W/2,H*0.1,12,’#5566aa’);
-// Portal connections
-const conn=[[0,4],[0,8],[0,1],[1,2],[1,7],[2,3],[3,5],[4,5],[5,8],[6,9],[6,4],[7,9],[8,6],[3,9]];
-ctx.save();ctx.globalAlpha=0.16;
-conn.forEach(([a,b])=>{
-const ca=CITIES[a],cb=CITIES[b];const ax=ca.mx*W,ay=ca.my*H,bx=cb.mx*W,by=cb.my*H;
-const gr=ctx.createLinearGradient(ax,ay,bx,by);gr.addColorStop(0,ca.acc||’#4488ff’);gr.addColorStop(1,cb.acc||’#4488ff’);
-ctx.strokeStyle=gr;ctx.lineWidth=1.8;ctx.setLineDash([5,11]);
-ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();ctx.setLineDash([]);
-});
-ctx.restore();
-CITIES.forEach((city,i)=>{
-const cx2=city.mx*W;const cy2=city.my*H;
-const unlocked=game.unlocked.has(city.id);
-const hov=inCirc(mouse.x,mouse.y,cx2,cy2,38);
-const pulse=Math.sin(mapPulse*2+i*0.85)*0.5+0.5;
-ctx.save();ctx.globalAlpha=(unlocked?0.28:0.1)+(hov?0.28:0)*pulse;ctx.strokeStyle=city.acc;ctx.lineWidth=2.5;ctx.shadowColor=city.acc;ctx.shadowBlur=hov?26:10;
-ctx.beginPath();ctx.arc(cx2,cy2,34+pulse*5,0,Math.PI*2);ctx.stroke();ctx.restore();
-ctx.save();ctx.globalAlpha=unlocked?0.94:0.4;
-const cg=ctx.createRadialGradient(cx2,cy2-8,4,cx2,cy2,25);cg.addColorStop(0,lc(city.acc,55));cg.addColorStop(1,city.acc);
-ctx.fillStyle=cg;ctx.shadowColor=city.acc;ctx.shadowBlur=hov?22:8;
-ctx.beginPath();ctx.arc(cx2,cy2,hov?30:25,0,Math.PI*2);ctx.fill();ctx.restore();
-ctx.save();ctx.globalAlpha=unlocked?1:0.38;
-txt(city.icon,cx2,cy2+9,21,’#fff’);
-txt(city.name,cx2,cy2+48,unlocked?12:10,unlocked?’#ddd’:’#444’);
-txt(city.sub,cx2,cy2+62,9,unlocked?city.acc:’#333’);
-if(!unlocked)txt(‘🔒’,cx2,cy2-8,15,’#666’);
-ctx.restore();
-for(let ci=0;ci<clickQ.length;ci++){
-if(inCirc(clickQ[ci].x,clickQ[ci].y,cx2,cy2,38)){
-clickQ.splice(ci,1);
-if(unlocked){pClick();hub=createHub(city.id);game.city=city.id;state=S.HUB;}else{pClick();tone(200,0.2,‘sine’,0.12);}
-break;
-}
-}
-});
-ctx.fillStyle=‘rgba(0,0,0,0.45)’;rr(12,H-62,265,52,10);ctx.fill();
-txt(‘🟢 Unlocked  |  🔒 Locked’,143,H-42,12,’#8899aa’);
-txt(‘Tap any realm to enter & fly’,143,H-22,12,’#556688’);
-const chov=isHov(W-68,34,110,34);btn(‘📖 Codex’,W-68,34,110,34,’#223344’,chov);
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,W-68,34,110,34)){clickQ.splice(ci,1);prevCodexState=S.MAP;state=S.CODEX;initCodex();pClick();break;}}
-const mhov=isHov(64,34,105,34);btn(‘← Menu’,64,34,105,34,’#223344’,mhov);
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,64,34,105,34)){clickQ.splice(ci,1);state=S.MENU;pClick();break;}}
-drawP();
-}
-
-// ================================================================
-//  DRAGON SELECT
-// ================================================================
-let selIdx=0;
-function drawSelect(){
-game.t+=0.014;
-const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,’#050520’);g.addColorStop(1,’#0a0a2e’);
-ctx.fillStyle=g;ctx.fillRect(0,0,W,H);drawStars(0.65,game.t*30);
-glow(‘Choose Your Dragon’,W/2,H*0.08,Math.min(H*0.044,30),’#d4c08c’,’#aa8844’,16);
-txt(‘Your partner across all of Aetheria’,W/2,H*0.13,14,’#6688aa’);
-const drg=DRAGONS[selIdx];
-const cw=Math.min(W*0.86,500);
-const lx=W/2-cw/2-32;const rx=W/2+cw/2+32;
-const lhov=isHovC(lx,H*0.5,28);const rhov=isHovC(rx,H*0.5,28);
-ctx.globalAlpha=lhov?1:0.6;txt(‘◀’,lx,H*0.5+9,30,lhov?’#fff’:’#6688aa’);
-ctx.globalAlpha=rhov?1:0.6;txt(‘▶’,rx,H*0.5+9,30,rhov?’#fff’:’#6688aa’);
-ctx.globalAlpha=1;
-for(let ci=0;ci<clickQ.length;ci++){
-if(inCirc(clickQ[ci].x,clickQ[ci].y,lx,H*0.5,32)){clickQ.splice(ci,1);selIdx=(selIdx-1+DRAGONS.length)%DRAGONS.length;pClick();}
-if(inCirc(clickQ[ci].x,clickQ[ci].y,rx,H*0.5,32)){clickQ.splice(ci,1);selIdx=(selIdx+1)%DRAGONS.length;pClick();}
-}
-ctx.fillStyle=‘rgba(0,0,0,0.58)’;rr(W/2-cw/2,H*0.17,cw,H*0.62,18);ctx.fill();
-ctx.strokeStyle=drg.acc;ctx.lineWidth=2;rr(W/2-cw/2,H*0.17,cw,H*0.62,18);ctx.stroke();
-const ds=Math.min(W,H)*0.0026;
-drawDragonAt(drg,W*0.65,H*0.4,ds,Math.sin(game.t*44)*0.06,game.t*132,1);
-glow(drg.name,W/2-cw*0.16,H*0.24,20,drg.acc,drg.acc,12);
-txt(drg.cls,W/2-cw*0.16,H*0.295,13,’#aaa’);txt(drg.pers,W/2-cw*0.16,H*0.33,13,drg.acc);txt(’Breath: ’+drg.breathType,W/2-cw*0.16,H*0.365,12,’#cc8844’);
-const sbx=W/2-cw*0.44;const sbw=cw*0.36;
-[{l:‘SPEED’,v:drg.spd},{l:‘STAMINA’,v:drg.sta},{l:‘AGILITY’,v:drg.agi},{l:‘BREATH’,v:drg.pwr}].forEach((s,i)=>{
-const sy=H*0.41+i*H*0.05;txt(s.l,sbx,sy-H*0.007,11,’#888’,‘left’);bar(sbx,sy,sbw,9,s.v/10,drg.acc,’#222’);
-});
-txti(’”’+drg.lore.slice(0,125)+’…”’,W/2,H*0.65,11,’#8888aa’);
-txt(‘✦ ‘+drg.abils.join(’ · ‘),W/2,H*0.695,12,drg.acc);
-DRAGONS.forEach((_,i)=>{ctx.fillStyle=i===selIdx?drg.acc:’#333’;ctx.beginPath();ctx.arc(W/2-24+i*18,H*0.73,i===selIdx?7:5,0,Math.PI*2);ctx.fill();});
-const sby=H*0.83;const shov=isHov(W/2,sby,220,52);
-ctx.save();ctx.shadowColor=drg.acc;ctx.shadowBlur=shov?22:10;btn(`Ride ${drg.name}!`,W/2,sby,220,52,dc(drg.acc,30),shov);ctx.restore();
-for(let ci=0;ci<clickQ.length;ci++){
-if(inBox(clickQ[ci].x,clickQ[ci].y,W/2,sby,220,52)){
-clickQ.splice(ci,1);game.dragon=drg.id;initBond(drg.id);saveGame();pSuccess();fanfare();state=S.MAP;break;
-}
-}
-const bhov=isHov(60,34,98,34);btn(‘← Back’,60,34,98,34,’#223344’,bhov);
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,60,34,98,34)){clickQ.splice(ci,1);state=S.MENU;pClick();break;}}
-drawP();
-}
-
-// ================================================================
-//  CODEX  —  Full mythology quotes & sources
-// ================================================================
-let codexIdx=0;
-function initCodex(){codexIdx=0;}
-function drawCodex(){
-const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,’#060402’);g.addColorStop(1,’#180e08’);
-ctx.fillStyle=g;ctx.fillRect(0,0,W,H);drawStars(0.22,codexIdx*5);
-glow(‘📖  Dragon Codex’,W/2,H*0.07,Math.min(H*0.04,28),’#d4c08c’,’#aa8844’,16);
-txt(‘Historical Sources & Mythology’,W/2,H*0.115,13,’#8a6a3a’);
-const e=CODEX[codexIdx];
-const pw=Math.min(W*0.9,590);const px=W/2-pw/2;
-ctx.fillStyle=‘rgba(0,0,0,0.6)’;rr(px,H*0.14,pw,H*0.7,16);ctx.fill();
-ctx.strokeStyle=’#6a4a22’;ctx.lineWidth=1.8;rr(px,H*0.14,pw,H*0.7,16);ctx.stroke();
-const dr=DRAGONS.find(d=>d.id===e.dragon)||DRAGONS[0];
-const ds=Math.min(W,H)*0.0014;
-drawDragonAt(dr,px+pw-58,H*0.26,ds,0,Date.now()*0.002,1);
-// Title & category
-glow(e.title,W/2-30,H*0.205,Math.min(H*0.032,22),’#d4c08c’,’#aa8844’,10);
-ctx.fillStyle=‘rgba(170,120,50,0.2)’;rr(px+12,H*0.225,pw-24,22,6);ctx.fill();
-txt(’[ ‘+e.cat+’ ]’,W/2,H*0.237,12,’#8a6a4a’);
-// Quote block
-const qy=H*0.265;ctx.fillStyle=‘rgba(80,50,10,0.22)’;rr(px+12,qy,pw-24,H*0.14,8);ctx.fill();
-ctx.strokeStyle=’#6a4a22’;ctx.lineWidth=1;rr(px+12,qy,pw-24,H*0.14,8);ctx.stroke();
-// Decorative quote marks
-ctx.save();ctx.globalAlpha=0.25;ctx.font=`bold ${Math.min(H*0.09,60)}px Georgia,serif`;ctx.fillStyle=’#aa8844’;
-ctx.textAlign=‘left’;ctx.fillText(’”’,px+16,qy+H*0.11);
-ctx.textAlign=‘right’;ctx.fillText(’”’,px+pw-12,qy+H*0.12);ctx.restore();
-// Quote text  (wrapped)
-wrapText(e.quote,px+30,qy+H*0.035,pw-60,H*0.11,16,‘italic’,’#d4b870’);
-// Source line
-ctx.fillStyle=‘rgba(200,150,80,0.18)’;rr(px+12,qy+H*0.145,pw-24,20,4);ctx.fill();
-txt(e.source,W/2,qy+H*0.157,10.5,’#a0804a’);
-// Main text
-wrapText(e.text,px+16,qy+H*0.195,pw-32,H*0.32,13,‘normal’,’#c8b880’);
-// Nav
-const nhov=isHov(W/2-90,H*0.88,160,42);const phov=isHov(W/2+90,H*0.88,160,42);
-btn(‘◀ Prev’,W/2-90,H*0.88,160,42,’#3a2a10’,nhov);btn(‘Next ▶’,W/2+90,H*0.88,160,42,’#3a2a10’,phov);
-for(let ci=0;ci<clickQ.length;ci++){
-if(inBox(clickQ[ci].x,clickQ[ci].y,W/2-90,H*0.88,160,42)){clickQ.splice(ci,1);codexIdx=(codexIdx-1+CODEX.length)%CODEX.length;pClick();}
-if(inBox(clickQ[ci].x,clickQ[ci].y,W/2+90,H*0.88,160,42)){clickQ.splice(ci,1);codexIdx=(codexIdx+1)%CODEX.length;pClick();}
-}
-txt(`${codexIdx+1} / ${CODEX.length}`,W/2,H*0.95,13,’#6a4a22’);
-const bhov=isHov(60,34,100,34);btn(‘← Back’,60,34,100,34,’#3a2a10’,bhov);
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,60,34,100,34)){clickQ.splice(ci,1);state=prevCodexState||S.MAP;pClick();break;}}
-drawP();
-}
-
-function wrapText(text,x,y,maxW,maxH,size,style,color){
-ctx.save();ctx.font=`${style} ${size}px 'Georgia',serif`;ctx.fillStyle=color;ctx.textAlign=‘left’;
-const words=text.split(’ ‘);let line=’’;let cy=y;
-for(const w of words){
-const test=line+w+’ ‘;
-if(ctx.measureText(test).width>maxW&&line!==’’){
-ctx.fillText(line,x,cy);line=w+’ ’;cy+=size*1.42;
-if(cy>y+maxH)break;
-} else line=test;
-}
-if(line&&cy<=y+maxH)ctx.fillText(line,x,cy);
-ctx.restore();
-}
-
-// ================================================================
-//  MAIN MENU
-// ================================================================
-let menuPhase=0,menuDrIdx=0;
-function drawMenu(){
-menuPhase+=0.011;menuDrIdx=(menuDrIdx+0.007)%DRAGONS.length;
-const drg=DRAGONS[Math.floor(menuDrIdx)];
-const t2=Math.sin(menuPhase*0.28);
-const g=ctx.createLinearGradient(0,0,0,H);
-g.addColorStop(0,`hsl(${220+t2*12},55%,${7+t2*3}%)`);g.addColorStop(0.5,`hsl(${230+t2*8},42%,${11+t2*3}%)`);g.addColorStop(1,`hsl(${240+t2*5},32%,${5+t2*2}%)`);
-ctx.fillStyle=g;ctx.fillRect(0,0,W,H);drawStars(1.0,menuPhase*30);
-ctx.save();ctx.globalAlpha=0.15;
-for(let i=0;i<6;i++){const cx2=((i*200+menuPhase*22)%(W+300))-100;const cy2=H*(0.14+i*0.055);ctx.fillStyle=’#8899bb’;ctx.beginPath();ctx.ellipse(cx2,cy2,72+i*10,22+i*4,0,0,Math.PI*2);ctx.fill();}
-ctx.restore();
-ctx.save();ctx.globalAlpha=0.14;
-const ds=Math.min(W,H)*0.007;
-drawDragonAt(drg,W*0.8,H*0.5,ds,Math.sin(menuPhase*32)*0.08,menuPhase*110,1);
-ctx.restore();
-// Animated title glow
-const titlePulse=Math.sin(menuPhase*60)*0.12+0.88;
-ctx.save();ctx.globalAlpha=titlePulse;
-glow(‘DRAGONFLIGHT’,W/2,H*0.2,Math.min(H*0.072,54),’#d4c08c’,’#cc8833’,28);
-glow(‘MYTHIC RIDERS’,W/2,H*0.305,Math.min(H*0.052,38),’#c89858’,’#aa6622’,18);
-glow(‘✦  A E T H E R I A  ✦’,W/2,H*0.37,Math.min(H*0.026,19),’#8877aa’,’#443366’,10);
-ctx.restore();
-txt(‘10 Mythic Cities · Historical Dragon Mythology · Smooth Sky Flight’,W/2,H*0.43,Math.min(H*0.018,13),’#5566aa’);
-const bw=Math.min(W*0.56,285);
-const items=[
-{l:game.dragon?‘▶ Continue’:‘🐉 New Rider’, y:H*0.52,col:’#1a3a5a’,a:()=>{initAudio();if(game.dragon){hub=createHub(game.city);state=S.MAP;}else state=S.SELECT;}},
-{l:‘🗺 World Map’,y:H*0.595,col:’#1a3a1a’,a:()=>{initAudio();state=S.MAP;}},
-{l:‘🐉 Choose Dragon’,y:H*0.67,col:’#2a2a4a’,a:()=>{initAudio();state=S.SELECT;}},
-{l:‘📖 Dragon Codex’,y:H*0.745,col:’#3a2a12’,a:()=>{initAudio();prevCodexState=S.MENU;state=S.CODEX;initCodex();}},
-];
-items.forEach(b=>{
-const hov=isHov(W/2,b.y,bw,50);
-ctx.save();ctx.shadowColor=drg.acc;ctx.shadowBlur=hov?16:0;btn(b.l,W/2,b.y,bw,50,b.col,hov);ctx.restore();
-for(let ci=0;ci<clickQ.length;ci++){if(inBox(clickQ[ci].x,clickQ[ci].y,W/2,b.y,bw,50)){clickQ.splice(ci,1);b.a();pClick();break;}}
-});
-if(game.flights>0)txt(`Flights: ${game.flights}  ·  Cities explored: ${game.unlocked.size}/10`,W/2,H*0.84,12,’#444’);
-// Mobile controls hint
-ctx.fillStyle=‘rgba(0,0,0,0.42)’;rr(12,H-46,W-24,36,8);ctx.fill();
-txt(‘📱 Virtual Joystick + Buttons  |  ⌨️ WASD/Arrows + Space + F  |  🎮 Device Tilt’,W/2,H-24,11,’#445566’);
-drawP();
-}
-
-// ================================================================
-//  MAIN GAME LOOP
-// ================================================================
-let lastT=performance.now();
-
-function loop(now){
-requestAnimationFrame(loop);
-const dt=Math.min((now-lastT)/1000,0.05);
-lastT=now;
-game.t+=dt;hue=(hue+dt*40)%360;
-updP(dt);
-updateActionButtons();
-ctx.clearRect(0,0,W,H);
-switch(state){
-case S.MENU:   drawMenu();  break;
-case S.SELECT: drawSelect();break;
-case S.MAP:    drawMap();   break;
-case S.HUB:    if(hub)drawHub(hub); break;
-case S.TRAIN:  if(training){updateTraining(training,dt);drawTraining(training);}break;
-case S.FLIGHT: if(flight){updateFlight(flight,dt);drawFlight(flight);}break;
-case S.CODEX:  drawCodex(); break;
-}
-// Flush unhandled clicks
-if(clickQ.length>0)clickQ.length=0;
-}
-
-// Pause key
-window.addEventListener(‘keydown’,e=>{
-if(state===S.FLIGHT&&flight){
-if(e.code===‘KeyP’||e.code===‘Escape’){
-if(!keys._pauseThisFrame){flight.paused=!flight.paused;keys._pauseThisFrame=true;}
-}
-}
-});
-window.addEventListener(‘keyup’,e=>{if(e.code===‘KeyP’||e.code===‘Escape’)keys._pauseThisFrame=false;});
-
-requestAnimationFrame(loop);
-
 </script>
 </body>
 </html>
